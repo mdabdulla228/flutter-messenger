@@ -11,11 +11,13 @@ jobs:
           java-version: '17'
       - uses: subosito/flutter-action@v2
         with:
+          flutter-version: '3.24.5'
           channel: 'stable'
       - name: Build Flutter APK
         run: |
+          flutter clean
           flutter pub get
-          flutter build apk --debug --android-skip-build-dependency-validation
+          flutter build apk --debug
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
