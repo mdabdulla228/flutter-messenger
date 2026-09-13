@@ -6,3 +6,4 @@ android/app/build/
 android/local.properties
 ios/.symlinks/
 *.lock
+android/app/src/main/java/io/flutter/plugins/GeneratedPluginRegistrant.java
