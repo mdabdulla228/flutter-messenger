@@ -5,8 +5,8 @@ plugins {
 }
 
 android {
-    namespace = "com.keochat.app"
-    compileSdk = 34
+    namespace = "com.example.flutter_messenger"
+    compileSdk = 35
     ndkVersion = flutter.ndkVersion
 
     compileOptions {
@@ -19,9 +19,9 @@ android {
     }
 
     defaultConfig {
-        applicationId = "com.keochat.app"
-        minSdk = 24
-        targetSdk = 34
+        applicationId = "com.example.flutter_messenger"
+        minSdk = flutter.minSdkVersion
+        targetSdk = 35
         versionCode = flutter.versionCode
         versionName = flutter.versionName
     }
@@ -35,17 +35,4 @@ android {
 
 flutter {
     source = "../.."
-}
-
-repositories {
-    google()
-    mavenCentral()
-    maven {
-        url = uri("https://storage.googleapis.com/download.flutter.io")
-    }
-}
-
-dependencies {
-    // Flutter embedding JAR
-    implementation("io.flutter:flutter_embedding_debug:1.0.0-5d531788691ec3404cac0cee66ead4007b177363")
 }
