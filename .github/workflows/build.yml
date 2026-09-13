@@ -12,10 +12,8 @@ jobs:
       - uses: subosito/flutter-action@v2
         with:
           channel: 'stable'
-      - run: rm -f android/app/src/main/java/io/flutter/plugins/GeneratedPluginRegistrant.java
-      - run: flutter clean
       - run: flutter pub get
-      - run: flutter build apk --debug --android-skip-build-dependency-validation
+      - run: flutter build apk --debug
       - uses: actions/upload-artifact@v4
         with:
           name: app-debug
