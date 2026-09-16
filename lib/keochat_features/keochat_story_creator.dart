@@ -388,7 +388,7 @@ class _KeoStoryCreatorScreenState extends State<KeoStoryCreatorScreen> {
       videoPath: widget.isVideo ? widget.mediaFile.path : null,
       musicName: _selectedMusic?.title ?? 'KeoBeat Original',
       musicArtist: _selectedMusic?.artist,
-      musicUrl: _selectedMusic?.audioUrl,
+      musicUrl: null,
       text: _overlayText,
       textX: _textX,
       textY: _textY,
@@ -488,6 +488,7 @@ class _KeoStoryCreatorScreenState extends State<KeoStoryCreatorScreen> {
                           border: Border.all(color: Colors.white24),
                         ),
                         child: Text(
+                          _overlayText ?? '',
                           textAlign: TextAlign.center,
                           style: const TextStyle(color: Colors.white, fontSize: 24, fontWeight: FontWeight.bold),
                         ),
@@ -805,7 +806,10 @@ class DoodlePainter extends CustomPainter {
     for (int i = 0; i < points.length - 1; i++) {
       if (points[i] != null && points[i + 1] != null) {
         final paint = Paint()
+          ..color = points[i]!.color
           ..strokeCap = StrokeCap.round
+          ..strokeWidth = points[i]!.strokeWidth;
+        canvas.drawLine(points[i]!.point, points[i + 1]!.point, paint);
       }
     }
   }
