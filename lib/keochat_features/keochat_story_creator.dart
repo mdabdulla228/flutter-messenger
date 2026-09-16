@@ -1,3 +1,4 @@
+import 'dart:ui';
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
@@ -29,6 +30,17 @@ class _KeoStoryCreatorScreenState extends State<KeoStoryCreatorScreen> {
   String? _overlayText;
   String? _selectedFilter;
   String? _selectedSticker;
+  double _stickerX = 140.0;
+  double _stickerY = 180.0;
+  double _stickerScale = 1.0;
+
+  double _textX = 60.0;
+  double _textY = 280.0;
+  double _textScale = 1.0;
+
+  bool _isDoodleMode = false;
+  Color _selectedDoodleColor = Colors.white;
+  final List<DoodlePoint?> _doodlePoints = [];
 
   final List<KeoMusicItem> _allSongs = [
     KeoMusicItem(title: 'I Love My Life', artist: 'Affirm with Music', category: 'For you'),
@@ -270,31 +282,59 @@ class _KeoStoryCreatorScreenState extends State<KeoStoryCreatorScreen> {
   }
 
   void _openStickers() {
-    final stickers = ['❤️', '🔥', '🎉', '🌟', '✨', '💐', '🌹', '😍', '👑', '💯', '🌸', '🎈'];
+    final stickers = [
+      '💕', '😍', '🔥', '💋', '😘', '✨',
+      '🥰', '❤️', '😎', '😂', '😜', '😋',
+      '🌹', '👌', '💙', '💔', '🌺', '😭',
+      '🌸', '😁', '🌼', '😈', '✌️', '👑',
+      '😝', '👻', '😅', '😇', '😊', '💪',
+      '👉', '😢', '😏', '☺️', '😉', '😔',
+      '😛', '😻', '🎂', '💀', '👍', '😱',
+      '👽', '🐷', '😥', '😬', '🙂', '😪',
+      '😀', '😃', '😞', '😒', '😌', '😡',
+      '🎉', '🎈', '⭐', '💯', '💐', '🦋'
+    ];
     showModalBottomSheet(
       context: context,
-      backgroundColor: const Color(0xFF242526),
-      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(16))),
+      backgroundColor: const Color(0xFF1E1E1E),
+      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
       builder: (ctx) => Container(
-        padding: const EdgeInsets.all(16),
-        height: 240,
+        height: MediaQuery.of(context).size.height * 0.55,
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
         child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text('Choose Sticker', style: TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold)),
+            Container(
+              width: 40,
+              height: 4,
+              decoration: BoxDecoration(color: Colors.white24, borderRadius: BorderRadius.circular(2)),
+            ),
             const SizedBox(height: 12),
+            const Text('Stickers & Emojis', style: TextStyle(color: Colors.white, fontSize: 17, fontWeight: FontWeight.bold)),
+            const SizedBox(height: 14),
             Expanded(
-              child: GridView.count(
-                crossAxisCount: 6,
-                children: stickers.map((st) => InkWell(
-                  onTap: () {
-                    setState(() {
-                      _selectedSticker = st;
-                    });
-                    Navigator.pop(ctx);
-                  },
-                  child: Center(child: Text(st, style: const TextStyle(fontSize: 32))),
-                )).toList(),
+              child: GridView.builder(
+                gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                  crossAxisCount: 6,
+                  mainAxisSpacing: 8,
+                  crossAxisSpacing: 8,
+                ),
+                itemCount: stickers.length,
+                itemBuilder: (context, idx) {
+                  final st = stickers[idx];
+                  return InkWell(
+                    borderRadius: BorderRadius.circular(12),
+                    onTap: () {
+                      setState(() {
+                        _selectedSticker = st;
+                        _stickerX = 140.0;
+                        _stickerY = 220.0;
+                        _stickerScale = 1.0;
+                      });
+                      Navigator.pop(ctx);
+                    },
+                    child: Center(child: Text(st, style: const TextStyle(fontSize: 34))),
+                  );
+                },
               ),
             ),
           ],
@@ -346,7 +386,18 @@ class _KeoStoryCreatorScreenState extends State<KeoStoryCreatorScreen> {
       id: 'story_${DateTime.now().millisecondsSinceEpoch}',
       imagePath: widget.isVideo ? null : widget.mediaFile.path,
       videoPath: widget.isVideo ? widget.mediaFile.path : null,
-      musicName: _selectedMusic != null ? '${_selectedMusic!.title} • ${_selectedMusic!.artist}' : 'KeoBeat Original',
+      musicName: _selectedMusic?.title ?? 'KeoBeat Original',
+      musicArtist: _selectedMusic?.artist,
+      musicUrl: _selectedMusic?.audioUrl,
+      text: _overlayText,
+      textX: _textX,
+      textY: _textY,
+      textScale: _textScale,
+      sticker: _selectedSticker,
+      stickerX: _stickerX,
+      stickerY: _stickerY,
+      stickerScale: _stickerScale,
+      filter: _selectedFilter,
       createdAt: DateTime.now(),
     );
 
@@ -354,7 +405,7 @@ class _KeoStoryCreatorScreenState extends State<KeoStoryCreatorScreen> {
 
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(
-        content: Text('স্টোরি সফলভাবে আপলোড হয়েছে!'),
+        content: Text('Story shared successfully!'),
         backgroundColor: Color(0xFF31A24C),
       ),
     );
@@ -378,37 +429,242 @@ class _KeoStoryCreatorScreenState extends State<KeoStoryCreatorScreen> {
       backgroundColor: Colors.black,
       body: Stack(
         children: [
-          // Background Media
+          // Adaptive Background matching image colors (Facebook style)
           Positioned.fill(
-            child: ColorFiltered(
-              colorFilter: colorFilter ?? const ColorFilter.mode(Colors.transparent, BlendMode.dst),
-              child: Image.file(
-                File(widget.mediaFile.path),
-                fit: BoxFit.contain,
+            child: Image.file(
+              File(widget.mediaFile.path),
+              fit: BoxFit.cover,
+            ),
+          ),
+          Positioned.fill(
+            child: Container(
+              color: Colors.black.withOpacity(0.45),
+            ),
+          ),
+          Positioned.fill(
+            child: BackdropFilter(
+              filter: ImageFilter.blur(sigmaX: 30, sigmaY: 30),
+              child: const SizedBox.expand(),
+            ),
+          ),
+          // Center Main Media with Selected Filter
+          Positioned.fill(
+            child: Center(
+              child: ColorFiltered(
+                colorFilter: colorFilter ?? const ColorFilter.mode(Colors.transparent, BlendMode.dst),
+                child: Image.file(
+                  File(widget.mediaFile.path),
+                  fit: BoxFit.contain,
+                ),
               ),
             ),
           ),
 
-          // Text overlay if any
+          // Draggable & Resizable Text overlay
           if (_overlayText != null)
-            Center(
-              child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                color: Colors.black54,
-                child: Text(
-                  _overlayText!,
-                  textAlign: TextAlign.center,
-                  style: const TextStyle(color: Colors.white, fontSize: 24, fontWeight: FontWeight.bold),
+            Positioned(
+              top: _textY,
+              left: _textX,
+              child: GestureDetector(
+                onScaleUpdate: (details) {
+                  setState(() {
+                    _textX += details.focalPointDelta.dx;
+                    _textY += details.focalPointDelta.dy;
+                    if (details.scale != 1.0) {
+                      _textScale = (_textScale * details.scale).clamp(0.6, 3.0);
+                    }
+                  });
+                },
+                child: Transform.scale(
+                  scale: _textScale,
+                  child: Stack(
+                    clipBehavior: Clip.none,
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                        decoration: BoxDecoration(
+                          color: Colors.black.withOpacity(0.6),
+                          borderRadius: BorderRadius.circular(10),
+                          border: Border.all(color: Colors.white24),
+                        ),
+                        child: Text(
+                          textAlign: TextAlign.center,
+                          style: const TextStyle(color: Colors.white, fontSize: 24, fontWeight: FontWeight.bold),
+                        ),
+                      ),
+                      Positioned(
+                        top: -8,
+                        right: -8,
+                        child: GestureDetector(
+                          onTap: () => setState(() => _overlayText = null),
+                          child: Container(
+                            padding: const EdgeInsets.all(3),
+                            decoration: const BoxDecoration(color: Colors.black87, shape: BoxShape.circle),
+                            child: const Icon(Icons.close, color: Colors.white, size: 14),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
               ),
             ),
 
-          // Sticker overlay if any
+          // Draggable & Resizable Sticker overlay
           if (_selectedSticker != null)
             Positioned(
-              top: 150,
-              left: 40,
-              child: Text(_selectedSticker!, style: const TextStyle(fontSize: 60)),
+              top: _stickerY,
+              left: _stickerX,
+              child: GestureDetector(
+                onScaleUpdate: (details) {
+                  setState(() {
+                    _stickerX += details.focalPointDelta.dx;
+                    _stickerY += details.focalPointDelta.dy;
+                    if (details.scale != 1.0) {
+                      _stickerScale = (_stickerScale * details.scale).clamp(0.6, 3.0);
+                    }
+                  });
+                },
+                child: Transform.scale(
+                  scale: _stickerScale,
+                  child: Stack(
+                    clipBehavior: Clip.none,
+                    children: [
+                      Positioned(
+                        top: -8,
+                        right: -8,
+                        child: GestureDetector(
+                          onTap: () => setState(() => _selectedSticker = null),
+                          child: Container(
+                            padding: const EdgeInsets.all(3),
+                            decoration: const BoxDecoration(color: Colors.black87, shape: BoxShape.circle),
+                            child: const Icon(Icons.close, color: Colors.white, size: 14),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+
+          // Freehand Doodle Drawing Canvas
+          Positioned.fill(
+            child: IgnorePointer(
+              child: GestureDetector(
+                onPanStart: (details) {
+                  setState(() {
+                    _doodlePoints.add(DoodlePoint(point: details.localPosition, color: _selectedDoodleColor));
+                  });
+                },
+                onPanUpdate: (details) {
+                  setState(() {
+                    _doodlePoints.add(DoodlePoint(point: details.localPosition, color: _selectedDoodleColor));
+                  });
+                },
+                onPanEnd: (details) {
+                  setState(() {
+                    _doodlePoints.add(null);
+                  });
+                },
+                child: CustomPaint(
+                  painter: DoodlePainter(_doodlePoints),
+                  size: Size.infinite,
+                ),
+              ),
+            ),
+          ),
+
+          // Facebook Style Doodle Toolbar (Colors, Undo, Clear, Done)
+          if (_isDoodleMode)
+            Positioned(
+              top: MediaQuery.of(context).padding.top + 10,
+              left: 16,
+              right: 16,
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  IconButton(
+                    icon: const Icon(Icons.undo, color: Colors.white),
+                    onPressed: () {
+                      if (_doodlePoints.isNotEmpty) {
+                        setState(() {
+                          int lastNull = _doodlePoints.lastIndexOf(null);
+                          if (lastNull != -1 && lastNull == _doodlePoints.length - 1) {
+                            _doodlePoints.removeLast();
+                            lastNull = _doodlePoints.lastIndexOf(null);
+                          }
+                          if (lastNull != -1) {
+                            _doodlePoints.removeRange(lastNull + 1, _doodlePoints.length);
+                          } else {
+                            _doodlePoints.clear();
+                          }
+                        });
+                      }
+                    },
+                  ),
+                  TextButton(
+                    onPressed: () => setState(() => _doodlePoints.clear()),
+                    child: const Text('Clear All', style: TextStyle(color: Colors.redAccent, fontWeight: FontWeight.bold)),
+                  ),
+                  ElevatedButton(
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: const Color(0xFF1877F2),
+                      shape: const StadiumBorder(),
+                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                    ),
+                    onPressed: () => setState(() => _isDoodleMode = false),
+                    child: const Text('Done', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+                  ),
+                ],
+              ),
+            ),
+
+          if (_isDoodleMode)
+            Positioned(
+              bottom: 30,
+              left: 16,
+              right: 16,
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                decoration: BoxDecoration(
+                  color: Colors.black.withOpacity(0.75),
+                  borderRadius: BorderRadius.circular(30),
+                  border: Border.all(color: Colors.white24),
+                ),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                  children: [
+                    Colors.white,
+                    Colors.black,
+                    const Color(0xFF1877F2),
+                    Colors.redAccent,
+                    Colors.greenAccent,
+                    Colors.amberAccent,
+                    Colors.purpleAccent,
+                  ].map((c) {
+                    final isSelected = _selectedDoodleColor == c;
+                    return GestureDetector(
+                      onTap: () => setState(() => _selectedDoodleColor = c),
+                      child: Container(
+                        width: 32,
+                        height: 32,
+                        decoration: BoxDecoration(
+                          color: c,
+                          shape: BoxShape.circle,
+                          border: Border.all(
+                            color: isSelected ? Colors.white : Colors.transparent,
+                            width: isSelected ? 3 : 1,
+                          ),
+                          boxShadow: [
+                            if (isSelected) const BoxShadow(color: Colors.white54, blurRadius: 6),
+                          ],
+                        ),
+                      ),
+                    );
+                  }).toList(),
+                ),
+              ),
             ),
 
           // Music playing badge indicator
@@ -475,44 +731,30 @@ class _KeoStoryCreatorScreenState extends State<KeoStoryCreatorScreen> {
                 }),
                 _buildRightAction(Icons.auto_fix_high, 'Effects', _openEffects),
                 _buildRightAction(Icons.draw, 'Doodle', () {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text('Doodle brush mode enabled')),
-                  );
+                  setState(() {
+                  });
                 }),
               ],
             ),
           ),
 
-          // Bottom Bar: Settings & Share Now Button
+          // Bottom Bar: Facebook Style Share Now Button
           Positioned(
-            bottom: 24,
-            left: 16,
+            bottom: MediaQuery.of(context).padding.bottom + 20,
             right: 16,
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                CircleAvatar(
-                  backgroundColor: Colors.black54,
-                  radius: 22,
-                  child: IconButton(
-                    icon: const Icon(Icons.settings, color: Colors.white),
-                    onPressed: () {},
-                  ),
-                ),
-                ElevatedButton.icon(
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFF1877F2),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
-                    padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
-                  ),
-                  onPressed: _publishStory,
-                  icon: const Icon(Icons.send, color: Colors.white, size: 18),
-                  label: const Text(
-                    'Share now',
-                    style: TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold),
-                  ),
-                ),
-              ],
+            child: ElevatedButton.icon(
+              style: ElevatedButton.styleFrom(
+                backgroundColor: const Color(0xFF1877F2),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+                padding: const EdgeInsets.symmetric(horizontal: 28, vertical: 13),
+                elevation: 4,
+              ),
+              onPressed: _publishStory,
+              icon: const Icon(Icons.send, color: Colors.white, size: 18),
+              label: const Text(
+                'Share now',
+                style: TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold),
+              ),
             ),
           ),
         ],
@@ -544,4 +786,30 @@ class _KeoStoryCreatorScreenState extends State<KeoStoryCreatorScreen> {
       ),
     );
   }
+}
+
+
+class DoodlePoint {
+  final Offset point;
+  final Color color;
+  final double strokeWidth;
+  DoodlePoint({required this.point, required this.color, this.strokeWidth = 4.0});
+}
+
+class DoodlePainter extends CustomPainter {
+  final List<DoodlePoint?> points;
+  DoodlePainter(this.points);
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    for (int i = 0; i < points.length - 1; i++) {
+      if (points[i] != null && points[i + 1] != null) {
+        final paint = Paint()
+          ..strokeCap = StrokeCap.round
+      }
+    }
+  }
+
+  @override
+  bool shouldRepaint(covariant DoodlePainter oldDelegate) => true;
 }

@@ -86,13 +86,17 @@ class _KeoChatRoomScreenState extends State<KeoChatRoomScreen> with SingleTicker
   @override
   void initState() {
     super.initState();
-    if (widget.storyReplyText != null) {
-      _messages.add({
+    if (widget.storyReplyText != null && widget.storyReplyText!.isNotEmpty) {
+      _messages.insert(0, {
+        'id': DateTime.now().millisecondsSinceEpoch.toString(),
         'isMe': true,
         'isStoryReply': true,
         'storyAuthor': widget.storyReplyAuthor ?? widget.friendName,
         'storyImagePath': widget.storyImagePath,
+        'text': widget.storyReplyText,
         'time': 'Just now',
+        'status': 'Delivered',
+        'reaction': null,
       });
     }
     _scrollController.addListener(_onScroll);
@@ -657,6 +661,18 @@ class _KeoChatRoomScreenState extends State<KeoChatRoomScreen> with SingleTicker
                                 ),
                               ),
                             const SizedBox(height: 8),
+                            if (msg['text'] != null && (msg['text'] as String).isNotEmpty)
+                              Padding(
+                                padding: const EdgeInsets.only(top: 2.0, bottom: 4.0),
+                                child: Text(
+                                  msg['text'],
+                                  style: const TextStyle(
+                                    color: Colors.white,
+                                    fontSize: 15,
+                                    fontWeight: FontWeight.w400,
+                                  ),
+                                ),
+                              ),
                           ],
                           if (msg['replyTo'] != null)
                             Container(

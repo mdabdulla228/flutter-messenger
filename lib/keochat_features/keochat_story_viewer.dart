@@ -284,36 +284,84 @@ class _KeoStoryViewerScreenState extends State<KeoStoryViewerScreen> {
         },
         child: Stack(
           children: [
-            // 1. Story Media in Center
+            // 1. Story Media in Center with Effects & Overlays
             Positioned.fill(
-              child: currentStory.imagePath != null && File(currentStory.imagePath!).existsSync()
-                  ? Image.file(
-                      File(currentStory.imagePath!),
-                      fit: BoxFit.contain,
-                    )
-                  : Container(
-                      decoration: const BoxDecoration(
-                        gradient: LinearGradient(
-                          colors: [Color(0xFF0F2027), Color(0xFF203A43), Color(0xFF2C5364)],
-                          begin: Alignment.topCenter,
-                          end: Alignment.bottomCenter,
-                        ),
-                      ),
-                      child: Center(
-                        child: Column(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            const Icon(Icons.auto_awesome, color: Colors.white70, size: 54),
-                            const SizedBox(height: 12),
-                            Text(
-                              'KeoChat Story',
-                              style: TextStyle(color: Colors.white.withValues(alpha: 0.9), fontSize: 24, fontWeight: FontWeight.bold),
+              child: Builder(
+                builder: (context) {
+                  ColorFilter? colorFilter;
+                  if (currentStory.filter == 'Warm') {
+                    colorFilter = const ColorFilter.mode(Colors.orangeAccent, BlendMode.color);
+                  } else if (currentStory.filter == 'Cool') {
+                    colorFilter = const ColorFilter.mode(Colors.blueAccent, BlendMode.color);
+                  } else if (currentStory.filter == 'Vintage') {
+                    colorFilter = const ColorFilter.mode(Colors.amber, BlendMode.modulate);
+                  } else if (currentStory.filter == 'B&W') {
+                    colorFilter = const ColorFilter.mode(Colors.grey, BlendMode.saturation);
+                  }
+
+                  Widget mediaWidget = (currentStory.imagePath != null && File(currentStory.imagePath!).existsSync())
+                      ? Image.file(File(currentStory.imagePath!), fit: BoxFit.contain)
+                      : Container(
+                          decoration: const BoxDecoration(
+                            gradient: LinearGradient(
+                              colors: [Color(0xFF0F2027), Color(0xFF203A43), Color(0xFF2C5364)],
+                              begin: Alignment.topCenter,
+                              end: Alignment.bottomCenter,
                             ),
-                          ],
-                        ),
-                      ),
-                    ),
+                          ),
+                          child: Center(
+                            child: Column(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                const Icon(Icons.auto_awesome, color: Colors.white70, size: 54),
+                                const SizedBox(height: 12),
+                                Text(
+                                  'KeoChat Story',
+                                  style: TextStyle(color: Colors.white.withValues(alpha: 0.9), fontSize: 24, fontWeight: FontWeight.bold),
+                                ),
+                              ],
+                            ),
+                          ),
+                        );
+
+                  if (colorFilter != null) {
+                    mediaWidget = ColorFiltered(colorFilter: colorFilter, child: mediaWidget);
+                  }
+                  return mediaWidget;
+                },
+              ),
             ),
+
+            // Text overlay if present
+              Positioned(
+                top: currentStory.textY,
+                left: currentStory.textX,
+                child: Transform.scale(
+                  scale: currentStory.textScale,
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                    decoration: BoxDecoration(
+                      color: Colors.black.withValues(alpha: 0.6),
+                      borderRadius: BorderRadius.circular(10),
+                      border: Border.all(color: Colors.white24),
+                    ),
+                    child: Text(
+                      currentStory.text ?? '',
+                      textAlign: TextAlign.center,
+                      style: const TextStyle(color: Colors.white, fontSize: 24, fontWeight: FontWeight.bold),
+                    ),
+                  ),
+                ),
+              ),
+
+            // Sticker overlay if present
+              Positioned(
+                top: currentStory.stickerY,
+                left: currentStory.stickerX,
+                child: Transform.scale(
+                  scale: currentStory.stickerScale,
+                ),
+              ),
 
             // 2. Floating Reactions
             ..._floatingReactions.map((reaction) => _buildFloatingReactionWidget(reaction)),
@@ -487,14 +535,19 @@ class _KeoStoryViewerScreenState extends State<KeoStoryViewerScreen> {
                                     child: TextField(
                                       controller: _commentController,
                                       focusNode: _commentFocusNode,
-                                      style: const TextStyle(color: Colors.white, fontSize: 13),
+                                      cursorColor: const Color(0xFF1877F2),
+                                      cursorWidth: 2.0,
+                                      style: const TextStyle(color: Colors.white, fontSize: 14),
                                       decoration: const InputDecoration(
                                         hintText: 'Send message... (max 20 words)',
-                                        hintStyle: TextStyle(color: Colors.white60, fontSize: 12),
+                                        hintStyle: TextStyle(color: Colors.white60, fontSize: 13),
                                         border: InputBorder.none,
                                         isDense: true,
-                                        contentPadding: EdgeInsets.symmetric(vertical: 10),
+                                        contentPadding: EdgeInsets.symmetric(vertical: 9),
                                       ),
+                                      onTap: () {
+                                        _pauseStory();
+                                      },
                                       onSubmitted: _validateAndSendComment,
                                     ),
                                   ),
@@ -504,6 +557,8 @@ class _KeoStoryViewerScreenState extends State<KeoStoryViewerScreen> {
                                 _buildEmojiButton('👍'),
                                 _buildEmojiButton('😂'),
                                 _buildEmojiButton('😮'),
+                                _buildEmojiButton('😢'),
+                                _buildEmojiButton('😡'),
                               ],
                             ),
                           ],
