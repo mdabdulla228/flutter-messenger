@@ -438,7 +438,7 @@ class _KeoStoryCreatorScreenState extends State<KeoStoryCreatorScreen> {
           ),
           Positioned.fill(
             child: Container(
-              color: Colors.black.withOpacity(0.45),
+              color: Colors.black.withValues(alpha: 0.45),
             ),
           ),
           Positioned.fill(
@@ -483,7 +483,7 @@ class _KeoStoryCreatorScreenState extends State<KeoStoryCreatorScreen> {
                       Container(
                         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                         decoration: BoxDecoration(
-                          color: Colors.black.withOpacity(0.6),
+                          color: Colors.black.withValues(alpha: 0.6),
                           borderRadius: BorderRadius.circular(10),
                           border: Border.all(color: Colors.white24),
                         ),
@@ -629,7 +629,7 @@ class _KeoStoryCreatorScreenState extends State<KeoStoryCreatorScreen> {
               child: Container(
                 padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                 decoration: BoxDecoration(
-                  color: Colors.black.withOpacity(0.75),
+                  color: Colors.black.withValues(alpha: 0.75),
                   borderRadius: BorderRadius.circular(30),
                   border: Border.all(color: Colors.white24),
                 ),
@@ -676,7 +676,7 @@ class _KeoStoryCreatorScreenState extends State<KeoStoryCreatorScreen> {
               child: Container(
                 padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
                 decoration: BoxDecoration(
-                  color: Colors.black.withOpacity(0.65),
+                  color: Colors.black.withValues(alpha: 0.65),
                   borderRadius: BorderRadius.circular(20),
                   border: Border.all(color: Colors.white30),
                 ),
