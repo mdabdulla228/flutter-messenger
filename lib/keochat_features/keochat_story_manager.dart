@@ -1,3 +1,4 @@
+
 class KeoStoryItem {
   final String id;
   final String? imagePath;
@@ -10,6 +11,8 @@ class KeoStoryItem {
   final double musicScale;
   final String? text;
   final int textColor;
+  final int textStyleIndex;
+  final bool textHasBackground;
   final double textX;
   final double textY;
   final double textScale;
@@ -19,6 +22,9 @@ class KeoStoryItem {
   final double stickerScale;
   final String? filter;
   final String? taggedFriend;
+  final double tagX;
+  final double tagY;
+  final double tagScale;
   final List<List<double>>? doodlePoints;
   final DateTime createdAt;
   final List<String> viewers;
@@ -35,6 +41,8 @@ class KeoStoryItem {
     this.musicScale = 1.0,
     this.text,
     this.textColor = 0xFFFFFFFF,
+    this.textStyleIndex = 0,
+    this.textHasBackground = true,
     this.textX = 60.0,
     this.textY = 300.0,
     this.textScale = 1.0,
@@ -44,6 +52,9 @@ class KeoStoryItem {
     this.stickerScale = 1.0,
     this.filter,
     this.taggedFriend,
+    this.tagX = 50.0,
+    this.tagY = 160.0,
+    this.tagScale = 1.0,
     this.doodlePoints,
     required this.createdAt,
     List<String>? viewers,

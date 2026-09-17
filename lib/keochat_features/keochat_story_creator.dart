@@ -38,6 +38,11 @@ class _KeoStoryCreatorScreenState extends State<KeoStoryCreatorScreen> {
   double _textY = 280.0;
   double _textScale = 1.0;
 
+  String? _taggedFriend;
+  double _tagX = 40.0;
+  double _tagY = 140.0;
+  double _tagScale = 1.0;
+
   bool _isDoodleMode = false;
   Color _selectedDoodleColor = Colors.white;
   final List<DoodlePoint?> _doodlePoints = [];
@@ -380,6 +385,120 @@ class _KeoStoryCreatorScreenState extends State<KeoStoryCreatorScreen> {
     );
   }
 
+  void _openTagFriends() {
+    final friends = [
+      {'name': 'Tanvir Hasan', 'badge': 'Best Friend', 'initial': 'T'},
+      {'name': 'Ayesha Siddika', 'badge': 'Close Friend', 'initial': 'A'},
+      {'name': 'Rahim Ahmed', 'badge': 'Family', 'initial': 'R'},
+      {'name': 'Karim Ullah', 'badge': 'Colleague', 'initial': 'K'},
+      {'name': 'Nabila Islam', 'badge': 'School Friend', 'initial': 'N'},
+      {'name': 'Sakib Al Hasan', 'badge': 'Celebrity', 'initial': 'S'},
+      {'name': 'Mehedi Miraz', 'badge': 'Sports', 'initial': 'M'},
+    ];
+    String query = '';
+
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: const Color(0xFF242526),
+      isScrollControlled: true,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
+      ),
+      builder: (ctx) {
+        return StatefulBuilder(
+          builder: (context, setModalState) {
+            final filtered = friends.where((f) => f['name']!.toLowerCase().contains(query.toLowerCase())).toList();
+            return Container(
+              height: MediaQuery.of(context).size.height * 0.65,
+              padding: const EdgeInsets.all(16),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Center(
+                    child: Container(
+                      width: 40,
+                      height: 4,
+                      decoration: BoxDecoration(
+                        color: Colors.white30,
+                        borderRadius: BorderRadius.circular(2),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      const Text(
+                        'Tag People',
+                        style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold),
+                      ),
+                      if (_taggedFriend != null)
+                        TextButton(
+                          onPressed: () {
+                            setState(() {
+                              _taggedFriend = null;
+                            });
+                            setModalState(() {});
+                          },
+                          child: const Text('Remove Tag', style: TextStyle(color: Colors.redAccent)),
+                        ),
+                    ],
+                  ),
+                  const SizedBox(height: 12),
+                  TextField(
+                    style: const TextStyle(color: Colors.white),
+                    decoration: InputDecoration(
+                      hintText: 'Search friends...',
+                      hintStyle: const TextStyle(color: Colors.white54),
+                      prefixIcon: const Icon(Icons.search, color: Colors.white54),
+                      filled: true,
+                      fillColor: const Color(0xFF3A3B3C),
+                      contentPadding: const EdgeInsets.symmetric(vertical: 0, horizontal: 16),
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(24),
+                        borderSide: BorderSide.none,
+                      ),
+                    ),
+                    onChanged: (val) {
+                      setModalState(() {
+                        query = val;
+                      });
+                    },
+                  ),
+                  const SizedBox(height: 10),
+                  Expanded(
+                    child: ListView.builder(
+                      itemCount: filtered.length,
+                      itemBuilder: (context, i) {
+                        final f = filtered[i];
+                        final isTagged = _taggedFriend == f['name'];
+                        return ListTile(
+                          leading: CircleAvatar(
+                            backgroundColor: const Color(0xFF1877F2),
+                          ),
+                          trailing: Icon(isTagged ? Icons.check_circle : Icons.add_circle_outline, color: isTagged ? const Color(0xFF1877F2) : Colors.white70),
+                          onTap: () {
+                            setState(() {
+                              _taggedFriend = f['name'];
+                              _tagX = 40.0;
+                              _tagY = 140.0;
+                              _tagScale = 1.0;
+                            });
+                            Navigator.pop(ctx);
+                          },
+                        );
+                      },
+                    ),
+                  ),
+                ],
+              ),
+            );
+          },
+        );
+      },
+    );
+  }
+
   void _publishStory() {
     final manager = KeoStoryManager();
     final newStory = KeoStoryItem(
@@ -539,6 +658,78 @@ class _KeoStoryCreatorScreenState extends State<KeoStoryCreatorScreen> {
                           child: Container(
                             padding: const EdgeInsets.all(3),
                             decoration: const BoxDecoration(color: Colors.black87, shape: BoxShape.circle),
+                            child: const Icon(Icons.close, color: Colors.white, size: 14),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+
+          // Draggable Tag Friend Sticker Overlay (Facebook Style)
+          if (_taggedFriend != null)
+            Positioned(
+              top: _tagY,
+              left: _tagX,
+              child: GestureDetector(
+                onScaleUpdate: (details) {
+                  setState(() {
+                    _tagX += details.focalPointDelta.dx;
+                    _tagY += details.focalPointDelta.dy;
+                    if (details.scale != 1.0) {
+                      _tagScale = (_tagScale * details.scale).clamp(0.6, 3.0);
+                    }
+                  });
+                },
+                child: Transform.scale(
+                  scale: _tagScale,
+                  child: Stack(
+                    clipBehavior: Clip.none,
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                        decoration: BoxDecoration(
+                          color: Colors.black.withValues(alpha: 0.75),
+                          borderRadius: BorderRadius.circular(20),
+                          border: Border.all(color: const Color(0xFF1877F2), width: 1.5),
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.black.withValues(alpha: 0.3),
+                              blurRadius: 8,
+                              offset: const Offset(0, 2),
+                            ),
+                          ],
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            const Icon(Icons.person, color: Color(0xFF1877F2), size: 18),
+                            const SizedBox(width: 6),
+                            Text(
+                              '@${_taggedFriend!}',
+                              style: const TextStyle(
+                                color: Colors.white,
+                                fontSize: 16,
+                                fontWeight: FontWeight.bold,
+                                letterSpacing: 0.2,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      Positioned(
+                        top: -8,
+                        right: -8,
+                        child: GestureDetector(
+                          onTap: () => setState(() => _taggedFriend = null),
+                          child: Container(
+                            padding: const EdgeInsets.all(3),
+                            decoration: const BoxDecoration(
+                              color: Colors.black87,
+                              shape: BoxShape.circle,
+                            ),
                             child: const Icon(Icons.close, color: Colors.white, size: 14),
                           ),
                         ),
@@ -725,11 +916,7 @@ class _KeoStoryCreatorScreenState extends State<KeoStoryCreatorScreen> {
                 _buildRightAction(Icons.emoji_emotions_outlined, 'Stickers', _openStickers),
                 _buildRightAction(Icons.title, 'Text', _addTextDialog),
                 _buildRightAction(Icons.music_note, 'Music', _openMusicSelector),
-                _buildRightAction(Icons.person_add_alt_1_outlined, 'Tag', () {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text('Tag friend selected')),
-                  );
-                }),
+                _buildRightAction(Icons.person_add_alt_1_outlined, 'Tag', _openTagFriends),
                 _buildRightAction(Icons.auto_fix_high, 'Effects', _openEffects),
                 _buildRightAction(Icons.draw, 'Doodle', () {
                   setState(() {
