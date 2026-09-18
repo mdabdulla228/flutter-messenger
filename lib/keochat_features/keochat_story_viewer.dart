@@ -558,13 +558,42 @@ class _KeoStoryViewerScreenState extends State<KeoStoryViewerScreen> {
                                     ),
                                   ),
                                 ),
-                                const SizedBox(width: 4),
-                                _buildEmojiButton('❤️'),
-                                _buildEmojiButton('👍'),
-                                _buildEmojiButton('😂'),
-                                _buildEmojiButton('😮'),
-                                _buildEmojiButton('😢'),
-                                _buildEmojiButton('😡'),
+                                const SizedBox(width: 6),
+                                ValueListenableBuilder<TextEditingValue>(
+                                  valueListenable: _commentController,
+                                  builder: (context, val, child) {
+                                    final hasText = val.text.trim().isNotEmpty;
+                                    if (hasText) {
+                                      return GestureDetector(
+                                        onTap: () => _validateAndSendComment(_commentController.text),
+                                        child: Container(
+                                          width: 38,
+                                          height: 38,
+                                          decoration: const BoxDecoration(
+                                            color: Color(0xFF1877F2),
+                                            shape: BoxShape.circle,
+                                          ),
+                                          child: const Icon(
+                                            Icons.send_rounded,
+                                            color: Colors.white,
+                                            size: 20,
+                                          ),
+                                        ),
+                                      );
+                                    }
+                                    return Row(
+                                      mainAxisSize: MainAxisSize.min,
+                                      children: [
+                                        _buildEmojiButton('❤️'),
+                                        _buildEmojiButton('👍'),
+                                        _buildEmojiButton('😂'),
+                                        _buildEmojiButton('😮'),
+                                        _buildEmojiButton('😢'),
+                                        _buildEmojiButton('😡'),
+                                      ],
+                                    );
+                                  },
+                                ),
                               ],
                             ),
                           ],
