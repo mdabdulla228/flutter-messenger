@@ -332,7 +332,8 @@ class _KeoStoryViewerScreenState extends State<KeoStoryViewerScreen> {
               ),
             ),
 
-            // Text overlay if present
+            // Text overlay only if present and non-empty
+            if (currentStory.text != null && currentStory.text!.trim().isNotEmpty)
               Positioned(
                 top: currentStory.textY,
                 left: currentStory.textX,
@@ -346,7 +347,7 @@ class _KeoStoryViewerScreenState extends State<KeoStoryViewerScreen> {
                       border: Border.all(color: Colors.white24),
                     ),
                     child: Text(
-                      currentStory.text ?? '',
+                      currentStory.text!,
                       textAlign: TextAlign.center,
                       style: const TextStyle(color: Colors.white, fontSize: 24, fontWeight: FontWeight.bold),
                     ),
@@ -354,12 +355,17 @@ class _KeoStoryViewerScreenState extends State<KeoStoryViewerScreen> {
                 ),
               ),
 
-            // Sticker overlay if present
+            // Sticker overlay only if present
+            if (currentStory.sticker != null && currentStory.sticker!.isNotEmpty)
               Positioned(
                 top: currentStory.stickerY,
                 left: currentStory.stickerX,
                 child: Transform.scale(
                   scale: currentStory.stickerScale,
+                  child: Text(
+                    currentStory.sticker!,
+                    style: const TextStyle(fontSize: 48),
+                  ),
                 ),
               ),
 
@@ -463,11 +469,11 @@ class _KeoStoryViewerScreenState extends State<KeoStoryViewerScreen> {
               ),
             ),
 
-            // 4. Bottom Controls: Completely fixed to avoid layout overflow
+            // 4. Bottom Controls: Lifts smoothly above keyboard
             Positioned(
               left: 0,
               right: 0,
-              bottom: 0,
+              bottom: MediaQuery.of(context).viewInsets.bottom,
               child: SafeArea(
                 top: false,
                 child: Container(
