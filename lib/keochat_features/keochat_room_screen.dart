@@ -660,19 +660,7 @@ class _KeoChatRoomScreenState extends State<KeoChatRoomScreen> with SingleTicker
                                   child: Icon(Icons.auto_awesome, color: Colors.white60, size: 36),
                                 ),
                               ),
-                            const SizedBox(height: 8),
-                            if (msg['text'] != null && (msg['text'] as String).isNotEmpty)
-                              Padding(
-                                padding: const EdgeInsets.only(top: 2.0, bottom: 4.0),
-                                child: Text(
-                                  msg['text'],
-                                  style: const TextStyle(
-                                    color: Colors.white,
-                                    fontSize: 15,
-                                    fontWeight: FontWeight.w400,
-                                  ),
-                                ),
-                              ),
+                            const SizedBox(height: 6),
                           ],
                           if (msg['replyTo'] != null)
                             Container(
