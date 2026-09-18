@@ -37,6 +37,9 @@ class _KeoStoryCreatorScreenState extends State<KeoStoryCreatorScreen> {
   double _textX = 60.0;
   double _textY = 280.0;
   double _textScale = 1.0;
+  Color _selectedTextColor = Colors.white;
+  String _selectedFontFamily = 'Classic';
+  bool _textBackground = true;
 
   String? _taggedFriend;
   double _tagX = 40.0;
@@ -252,37 +255,195 @@ class _KeoStoryCreatorScreenState extends State<KeoStoryCreatorScreen> {
 
   void _addTextDialog() {
     final controller = TextEditingController(text: _overlayText ?? '');
-    showDialog(
+    Color tempColor = _selectedTextColor;
+    String tempFont = _selectedFontFamily;
+    bool tempBg = _textBackground;
+
+    final fonts = ['Classic', 'Modern', 'Neon', 'Handwriting', 'Typewriter', 'Strong'];
+    final colors = [
+      Colors.white,
+      Colors.black,
+      const Color(0xFF1877F2),
+      Colors.amber,
+      Colors.redAccent,
+      Colors.pinkAccent,
+      Colors.greenAccent,
+      Colors.purpleAccent,
+      Colors.orangeAccent,
+      Colors.cyanAccent,
+    ];
+
+    TextStyle getStyle(String fontName, Color color, {double fontSize = 22}) {
+      switch (fontName) {
+        case 'Modern':
+          return TextStyle(color: color, fontSize: fontSize, fontWeight: FontWeight.w900, letterSpacing: 1.2);
+        case 'Neon':
+          return TextStyle(
+            color: color,
+            fontSize: fontSize,
+            fontWeight: FontWeight.bold,
+            shadows: [
+              Shadow(color: color.withValues(alpha: 0.9), blurRadius: 16),
+              Shadow(color: Colors.white.withValues(alpha: 0.8), blurRadius: 8),
+            ],
+          );
+        case 'Handwriting':
+          return TextStyle(color: color, fontSize: fontSize, fontStyle: FontStyle.italic, fontWeight: FontWeight.w600);
+        case 'Typewriter':
+          return TextStyle(color: color, fontSize: fontSize, fontFamily: 'monospace', fontWeight: FontWeight.w600);
+        case 'Strong':
+          return TextStyle(color: color, fontSize: fontSize, fontWeight: FontWeight.bold, letterSpacing: -0.5);
+        case 'Classic':
+        default:
+          return TextStyle(color: color, fontSize: fontSize, fontWeight: FontWeight.w700);
+      }
+    }
+
+    showModalBottomSheet(
       context: context,
-      builder: (ctx) => AlertDialog(
-        backgroundColor: const Color(0xFF242526),
-        title: const Text('Add Text', style: TextStyle(color: Colors.white)),
-        content: TextField(
-          controller: controller,
-          autofocus: true,
-          style: const TextStyle(color: Colors.white, fontSize: 18),
-          decoration: const InputDecoration(
-            hintText: 'Type your text...',
-            hintStyle: TextStyle(color: Colors.white54),
-          ),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx),
-            child: const Text('Cancel', style: TextStyle(color: Colors.white70)),
-          ),
-          ElevatedButton(
-            style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF1877F2)),
-            onPressed: () {
-              setState(() {
-                _overlayText = controller.text.trim().isEmpty ? null : controller.text.trim();
-              });
-              Navigator.pop(ctx);
-            },
-            child: const Text('Done', style: TextStyle(color: Colors.white)),
-          ),
-        ],
-      ),
+      isScrollControlled: true,
+      backgroundColor: Colors.black.withValues(alpha: 0.88),
+      builder: (ctx) {
+        return StatefulBuilder(
+          builder: (context, setModalState) {
+            return Padding(
+              padding: EdgeInsets.only(bottom: MediaQuery.of(context).viewInsets.bottom),
+              child: SafeArea(
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      // Top Bar: Cancel, Background Toggle, Done
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          TextButton(
+                            onPressed: () => Navigator.pop(ctx),
+                            child: const Text('Cancel', style: TextStyle(color: Colors.white70, fontSize: 16)),
+                          ),
+                          IconButton(
+                            icon: Icon(
+                              tempBg ? Icons.font_download : Icons.font_download_outlined,
+                              color: tempBg ? const Color(0xFF1877F2) : Colors.white,
+                            ),
+                            tooltip: 'Toggle Background',
+                            onPressed: () {
+                            },
+                          ),
+                          ElevatedButton(
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: const Color(0xFF1877F2),
+                              shape: const StadiumBorder(),
+                              padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 6),
+                            ),
+                            onPressed: () {
+                              setState(() {
+                                _overlayText = controller.text.trim().isEmpty ? null : controller.text.trim();
+                                _selectedTextColor = tempColor;
+                                _selectedFontFamily = tempFont;
+                                _textBackground = tempBg;
+                              });
+                              Navigator.pop(ctx);
+                            },
+                            child: const Text('Done', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 14),
+
+                      // Live Preview Box
+                      Container(
+                        width: double.infinity,
+                        constraints: const BoxConstraints(minHeight: 90),
+                        alignment: Alignment.center,
+                        padding: const EdgeInsets.all(12),
+                        decoration: BoxDecoration(
+                          color: tempBg ? Colors.black.withValues(alpha: 0.55) : Colors.transparent,
+                          borderRadius: BorderRadius.circular(16),
+                        ),
+                        child: TextField(
+                          controller: controller,
+                          autofocus: true,
+                          textAlign: TextAlign.center,
+                          maxLines: null,
+                          cursorColor: const Color(0xFF1877F2),
+                          style: getStyle(tempFont, tempColor, fontSize: 24),
+                          decoration: const InputDecoration(
+                            hintText: 'Type something...',
+                            hintStyle: TextStyle(color: Colors.white38, fontSize: 22),
+                            border: InputBorder.none,
+                          ),
+                          onChanged: (_) => setModalState(() {}),
+                        ),
+                      ),
+                      const SizedBox(height: 12),
+
+                      // Font Selector Chips
+                      SingleChildScrollView(
+                        scrollDirection: Axis.horizontal,
+                        child: Row(
+                          children: fonts.map((f) {
+                            final isSel = tempFont == f;
+                            return Padding(
+                              padding: const EdgeInsets.symmetric(horizontal: 4),
+                              child: ChoiceChip(
+                                label: Text(f),
+                                selected: isSel,
+                                selectedColor: const Color(0xFF1877F2),
+                                backgroundColor: const Color(0xFF242526),
+                                labelStyle: TextStyle(
+                                  color: isSel ? Colors.white : Colors.white70,
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 12,
+                                ),
+                                onSelected: (sel) {
+                                  if (sel) setModalState(() => tempFont = f);
+                                },
+                              ),
+                            );
+                          }).toList(),
+                        ),
+                      ),
+                      const SizedBox(height: 10),
+
+                      // Color Palette Bubbles
+                      SingleChildScrollView(
+                        scrollDirection: Axis.horizontal,
+                        child: Row(
+                          children: colors.map((c) {
+                            final isSel = tempColor == c;
+                            return GestureDetector(
+                              onTap: () => setModalState(() => tempColor = c),
+                              child: Container(
+                                margin: const EdgeInsets.symmetric(horizontal: 5),
+                                width: 32,
+                                height: 32,
+                                decoration: BoxDecoration(
+                                  color: c,
+                                  shape: BoxShape.circle,
+                                  border: Border.all(
+                                    color: isSel ? Colors.white : Colors.white38,
+                                    width: isSel ? 3 : 1.5,
+                                  ),
+                                  boxShadow: [
+                                    if (isSel) BoxShadow(color: c.withValues(alpha: 0.8), blurRadius: 8),
+                                  ],
+                                ),
+                              ),
+                            );
+                          }).toList(),
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                    ],
+                  ),
+                ),
+              ),
+            );
+          },
+        );
+      },
     );
   }
 
@@ -346,6 +507,32 @@ class _KeoStoryCreatorScreenState extends State<KeoStoryCreatorScreen> {
         ),
       ),
     );
+  }
+
+  TextStyle _getStoryTextStyle(String fontName, Color color, {double fontSize = 24}) {
+    switch (fontName) {
+      case 'Modern':
+        return TextStyle(color: color, fontSize: fontSize, fontWeight: FontWeight.w900, letterSpacing: 1.2);
+      case 'Neon':
+        return TextStyle(
+          color: color,
+          fontSize: fontSize,
+          fontWeight: FontWeight.bold,
+          shadows: [
+            Shadow(color: color.withValues(alpha: 0.9), blurRadius: 16),
+            Shadow(color: Colors.white.withValues(alpha: 0.8), blurRadius: 8),
+          ],
+        );
+      case 'Handwriting':
+        return TextStyle(color: color, fontSize: fontSize, fontStyle: FontStyle.italic, fontWeight: FontWeight.w600);
+      case 'Typewriter':
+        return TextStyle(color: color, fontSize: fontSize, fontFamily: 'monospace', fontWeight: FontWeight.w600);
+      case 'Strong':
+        return TextStyle(color: color, fontSize: fontSize, fontWeight: FontWeight.bold, letterSpacing: -0.5);
+      case 'Classic':
+      default:
+        return TextStyle(color: color, fontSize: fontSize, fontWeight: FontWeight.w700);
+    }
   }
 
   void _openEffects() {
@@ -509,6 +696,9 @@ class _KeoStoryCreatorScreenState extends State<KeoStoryCreatorScreen> {
       musicArtist: _selectedMusic?.artist,
       musicUrl: null,
       text: _overlayText,
+      textColor: _selectedTextColor.toARGB32(),
+      textStyleIndex: ['Classic', 'Modern', 'Neon', 'Handwriting', 'Typewriter', 'Strong'].indexOf(_selectedFontFamily),
+      textHasBackground: _textBackground,
       textX: _textX,
       textY: _textY,
       textScale: _textScale,
@@ -579,18 +769,19 @@ class _KeoStoryCreatorScreenState extends State<KeoStoryCreatorScreen> {
             ),
           ),
 
-          // Draggable & Resizable Text overlay
+          // Draggable & Resizable Text overlay (Styled Font, Color & Background)
           if (_overlayText != null)
             Positioned(
               top: _textY,
               left: _textX,
               child: GestureDetector(
+                onDoubleTap: _addTextDialog,
                 onScaleUpdate: (details) {
                   setState(() {
                     _textX += details.focalPointDelta.dx;
                     _textY += details.focalPointDelta.dy;
                     if (details.scale != 1.0) {
-                      _textScale = (_textScale * details.scale).clamp(0.6, 3.0);
+                      _textScale = (_textScale * details.scale).clamp(0.5, 4.0);
                     }
                   });
                 },
@@ -600,26 +791,29 @@ class _KeoStoryCreatorScreenState extends State<KeoStoryCreatorScreen> {
                     clipBehavior: Clip.none,
                     children: [
                       Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
                         decoration: BoxDecoration(
-                          color: Colors.black.withValues(alpha: 0.6),
-                          borderRadius: BorderRadius.circular(10),
-                          border: Border.all(color: Colors.white24),
+                          color: _textBackground ? Colors.black.withValues(alpha: 0.65) : Colors.transparent,
+                          borderRadius: BorderRadius.circular(12),
+                          border: _textBackground ? Border.all(color: Colors.white24) : null,
                         ),
                         child: Text(
                           _overlayText ?? '',
                           textAlign: TextAlign.center,
-                          style: const TextStyle(color: Colors.white, fontSize: 24, fontWeight: FontWeight.bold),
+                          style: _getStoryTextStyle(_selectedFontFamily, _selectedTextColor, fontSize: 24),
                         ),
                       ),
                       Positioned(
-                        top: -8,
-                        right: -8,
+                        top: -10,
+                        right: -10,
                         child: GestureDetector(
                           onTap: () => setState(() => _overlayText = null),
                           child: Container(
-                            padding: const EdgeInsets.all(3),
-                            decoration: const BoxDecoration(color: Colors.black87, shape: BoxShape.circle),
+                            padding: const EdgeInsets.all(4),
+                            decoration: const BoxDecoration(
+                              color: Colors.black87,
+                              shape: BoxShape.circle,
+                            ),
                             child: const Icon(Icons.close, color: Colors.white, size: 14),
                           ),
                         ),
@@ -641,7 +835,7 @@ class _KeoStoryCreatorScreenState extends State<KeoStoryCreatorScreen> {
                     _stickerX += details.focalPointDelta.dx;
                     _stickerY += details.focalPointDelta.dy;
                     if (details.scale != 1.0) {
-                      _stickerScale = (_stickerScale * details.scale).clamp(0.6, 3.0);
+                      _stickerScale = (_stickerScale * details.scale).clamp(0.5, 4.0);
                     }
                   });
                 },
@@ -650,14 +844,28 @@ class _KeoStoryCreatorScreenState extends State<KeoStoryCreatorScreen> {
                   child: Stack(
                     clipBehavior: Clip.none,
                     children: [
+                      Padding(
+                        padding: const EdgeInsets.all(8.0),
+                        child: Text(_selectedSticker!,
+                          style: const TextStyle(
+                            fontSize: 60,
+                            shadows: [
+                              Shadow(color: Colors.black45, blurRadius: 10, offset: Offset(0, 3)),
+                            ],
+                          ),
+                        ),
+                      ),
                       Positioned(
-                        top: -8,
-                        right: -8,
+                        top: 0,
+                        right: 0,
                         child: GestureDetector(
                           onTap: () => setState(() => _selectedSticker = null),
                           child: Container(
-                            padding: const EdgeInsets.all(3),
-                            decoration: const BoxDecoration(color: Colors.black87, shape: BoxShape.circle),
+                            padding: const EdgeInsets.all(4),
+                            decoration: const BoxDecoration(
+                              color: Colors.black87,
+                              shape: BoxShape.circle,
+                            ),
                             child: const Icon(Icons.close, color: Colors.white, size: 14),
                           ),
                         ),

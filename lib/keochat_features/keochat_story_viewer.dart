@@ -333,24 +333,57 @@ class _KeoStoryViewerScreenState extends State<KeoStoryViewerScreen> {
             ),
 
             // Text overlay only if present and non-empty
-            if (currentStory.text != null && currentStory.text!.trim().isNotEmpty)
               Positioned(
                 top: currentStory.textY,
                 left: currentStory.textX,
                 child: Transform.scale(
                   scale: currentStory.textScale,
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                    decoration: BoxDecoration(
-                      color: Colors.black.withValues(alpha: 0.6),
-                      borderRadius: BorderRadius.circular(10),
-                      border: Border.all(color: Colors.white24),
-                    ),
-                    child: Text(
-                      currentStory.text!,
-                      textAlign: TextAlign.center,
-                      style: const TextStyle(color: Colors.white, fontSize: 24, fontWeight: FontWeight.bold),
-                    ),
+                  child: Builder(
+                    builder: (context) {
+                      final textColor = Color(currentStory.textColor);
+                      final fontIdx = currentStory.textStyleIndex;
+                      TextStyle style;
+                      switch (fontIdx) {
+                        case 1:
+                          style = TextStyle(color: textColor, fontSize: 24, fontWeight: FontWeight.w900, letterSpacing: 1.2);
+                          break;
+                        case 2:
+                          style = TextStyle(
+                            color: textColor,
+                            fontSize: 24,
+                            fontWeight: FontWeight.bold,
+                            shadows: [
+                              Shadow(color: textColor.withValues(alpha: 0.9), blurRadius: 16),
+                              Shadow(color: Colors.white.withValues(alpha: 0.8), blurRadius: 8),
+                            ],
+                          );
+                          break;
+                        case 3:
+                          style = TextStyle(color: textColor, fontSize: 24, fontStyle: FontStyle.italic, fontWeight: FontWeight.w600);
+                          break;
+                        case 4:
+                          style = TextStyle(color: textColor, fontSize: 24, fontFamily: 'monospace', fontWeight: FontWeight.w600);
+                          break;
+                        case 5:
+                          style = TextStyle(color: textColor, fontSize: 24, fontWeight: FontWeight.bold, letterSpacing: -0.5);
+                          break;
+                        default:
+                          style = TextStyle(color: textColor, fontSize: 24, fontWeight: FontWeight.w700);
+                      }
+
+                      return Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                        decoration: BoxDecoration(
+                          color: currentStory.textHasBackground ? Colors.black.withValues(alpha: 0.65) : Colors.transparent,
+                          borderRadius: BorderRadius.circular(12),
+                          border: currentStory.textHasBackground ? Border.all(color: Colors.white24) : null,
+                        ),
+                        child: Text(currentStory.text!,
+                          textAlign: TextAlign.center,
+                          style: style,
+                        ),
+                      );
+                    },
                   ),
                 ),
               ),
