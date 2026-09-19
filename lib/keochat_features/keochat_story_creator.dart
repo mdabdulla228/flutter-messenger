@@ -3,12 +3,16 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'keochat_story_manager.dart';
+import 'keochat_music_picker.dart';
+import 'package:audioplayers/audioplayers.dart';
 
 class KeoMusicItem {
   final String title;
   final String artist;
   final String category;
-  KeoMusicItem({required this.title, required this.artist, required this.category});
+  final String? url;
+  final String? artwork;
+  KeoMusicItem({required this.title, required this.artist, required this.category, this.url, this.artwork});
 }
 
 class KeoStoryCreatorScreen extends StatefulWidget {
@@ -26,6 +30,7 @@ class KeoStoryCreatorScreen extends StatefulWidget {
 }
 
 class _KeoStoryCreatorScreenState extends State<KeoStoryCreatorScreen> {
+  final AudioPlayer _creatorAudioPlayer = AudioPlayer();
   KeoMusicItem? _selectedMusic;
   String? _overlayText;
   String? _selectedFilter;
@@ -50,207 +55,45 @@ class _KeoStoryCreatorScreenState extends State<KeoStoryCreatorScreen> {
   Color _selectedDoodleColor = Colors.white;
   final List<DoodlePoint?> _doodlePoints = [];
 
-  final List<KeoMusicItem> _allSongs = [
-    KeoMusicItem(title: 'I Love My Life', artist: 'Affirm with Music', category: 'For you'),
-    KeoMusicItem(title: 'All My Life', artist: 'Lil Durk', category: 'For you'),
-    KeoMusicItem(title: 'My Baby', artist: 'Diamond Platnumz', category: 'Weekend'),
-    KeoMusicItem(title: 'MALA SANTA', artist: 'Becky G', category: 'Date Night'),
-    KeoMusicItem(title: 'Baba', artist: 'Hotkeed', category: 'Birthday'),
-    KeoMusicItem(title: "God's Plan", artist: 'Drake', category: 'For you'),
-    KeoMusicItem(title: 'Happiness Is My Choice', artist: 'iQ Watson', category: 'Family'),
-    KeoMusicItem(title: 'Mirror (Album Version)', artist: 'Lil Wayne', category: 'For you'),
-    KeoMusicItem(title: 'Fine Girl', artist: '2stepvibes', category: 'Weekend'),
-    KeoMusicItem(title: 'Love My Life', artist: 'Demarco', category: 'For you'),
-    KeoMusicItem(title: 'Tum Hi Ho', artist: 'Arijit Singh', category: 'Date Night'),
-    KeoMusicItem(title: 'Bojhena Shey Bojhena', artist: 'Arijit Singh', category: 'Date Night'),
-    KeoMusicItem(title: 'Mon Majhi Re', artist: 'Arijit Singh', category: 'For you'),
-  ];
+  
 
-  void _openMusicSelector() {
-    showModalBottomSheet(
+  void _openMusicSelector() async {
+    try { await _creatorAudioPlayer.pause(); } catch (_) {}
+    if (!mounted) return;
+    final KeoMusicTrack? selected = await showModalBottomSheet<KeoMusicTrack>(
       context: context,
       isScrollControlled: true,
-      backgroundColor: const Color(0xFF18191A),
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
-      ),
-      builder: (ctx) {
-        String searchQuery = '';
-        String activeCategory = 'For you';
-        final categories = ['For you', 'Weekend', 'Birthday', 'Date Night', 'Family'];
-
-        return StatefulBuilder(
-          builder: (context, setModalState) {
-            final filteredSongs = _allSongs.where((s) {
-              final matchesCategory = activeCategory == 'For you' || s.category == activeCategory;
-              final matchesSearch = s.title.toLowerCase().contains(searchQuery.toLowerCase()) ||
-                  s.artist.toLowerCase().contains(searchQuery.toLowerCase());
-              return matchesCategory && matchesSearch;
-            }).toList();
-
-            return Container(
-              height: MediaQuery.of(context).size.height * 0.88,
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    children: [
-                      IconButton(
-                        icon: const Icon(Icons.arrow_back, color: Colors.white),
-                        onPressed: () => Navigator.pop(ctx),
-                      ),
-                      const SizedBox(width: 8),
-                      const Text(
-                        'Add a song to your story',
-                        style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 12),
-                  // Search Bar
-                  Container(
-                    height: 42,
-                    decoration: BoxDecoration(
-                      color: const Color(0xFF242526),
-                      borderRadius: BorderRadius.circular(24),
-                    ),
-                    padding: const EdgeInsets.symmetric(horizontal: 14),
-                    child: Row(
-                      children: [
-                        const Icon(Icons.search, color: Colors.white70, size: 20),
-                        const SizedBox(width: 8),
-                        Expanded(
-                          child: TextField(
-                            style: const TextStyle(color: Colors.white, fontSize: 14),
-                            decoration: const InputDecoration(
-                              hintText: 'Search music',
-                              hintStyle: TextStyle(color: Colors.white54, fontSize: 14),
-                              border: InputBorder.none,
-                              isDense: true,
-                            ),
-                            onChanged: (val) {
-                              setModalState(() {
-                                searchQuery = val;
-                              });
-                            },
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                  const SizedBox(height: 12),
-                  // Categories chips
-                  SingleChildScrollView(
-                    scrollDirection: Axis.horizontal,
-                    child: Row(
-                      children: categories.map((cat) {
-                        final isSel = activeCategory == cat;
-                        return Padding(
-                          padding: const EdgeInsets.only(right: 8.0),
-                          child: ChoiceChip(
-                            label: Text(cat),
-                            selected: isSel,
-                            selectedColor: const Color(0xFF3A3B3C),
-                            backgroundColor: const Color(0xFF242526),
-                            labelStyle: TextStyle(
-                              color: isSel ? Colors.white : Colors.white70,
-                              fontWeight: FontWeight.w600,
-                              fontSize: 13,
-                            ),
-                            onSelected: (_) {
-                              setModalState(() {
-                                activeCategory = cat;
-                              });
-                            },
-                          ),
-                        );
-                      }).toList(),
-                    ),
-                  ),
-                  const SizedBox(height: 16),
-                  Text(
-                    activeCategory,
-                    style: const TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold),
-                  ),
-                  const SizedBox(height: 8),
-                  // Song list
-                  Expanded(
-                    child: ListView.builder(
-                      itemCount: filteredSongs.length,
-                      itemBuilder: (context, i) {
-                        final song = filteredSongs[i];
-                        final isChosen = _selectedMusic?.title == song.title;
-
-                        return ListTile(
-                          contentPadding: const EdgeInsets.symmetric(vertical: 4),
-                          leading: Container(
-                            width: 46,
-                            height: 46,
-                            decoration: BoxDecoration(
-                              color: const Color(0xFFE41E3F),
-                              borderRadius: BorderRadius.circular(6),
-                            ),
-                            child: const Center(
-                              child: Icon(Icons.music_note, color: Colors.white, size: 26),
-                            ),
-                          ),
-                          title: Text(
-                            song.title,
-                            style: TextStyle(
-                              color: isChosen ? const Color(0xFF1877F2) : Colors.white,
-                              fontWeight: FontWeight.bold,
-                              fontSize: 15,
-                            ),
-                          ),
-                          subtitle: Text(
-                            song.artist,
-                            style: const TextStyle(color: Colors.white60, fontSize: 13),
-                          ),
-                          trailing: IconButton(
-                            icon: Icon(
-                              isChosen ? Icons.check_circle : Icons.play_arrow,
-                              color: isChosen ? const Color(0xFF1877F2) : Colors.white,
-                              size: 28,
-                            ),
-                            onPressed: () {
-                              setState(() {
-                                _selectedMusic = song;
-                              });
-                              Navigator.pop(ctx);
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                SnackBar(
-                                  content: Text('Selected & Playing: ${song.title} - ${song.artist} 🎵'),
-                                  backgroundColor: const Color(0xFF1877F2),
-                                  duration: const Duration(seconds: 2),
-                                ),
-                              );
-                            },
-                          ),
-                          onTap: () {
-                            setState(() {
-                              _selectedMusic = song;
-                            });
-                            Navigator.pop(ctx);
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              SnackBar(
-                                content: Text('Selected & Playing: ${song.title} - ${song.artist} 🎵'),
-                                backgroundColor: const Color(0xFF1877F2),
-                                duration: const Duration(seconds: 2),
-                              ),
-                            );
-                          },
-                        );
-                      },
-                    ),
-                  ),
-                ],
-              ),
-            );
-          },
-        );
-      },
+      backgroundColor: Colors.transparent,
+      builder: (ctx) => const KeoMusicPickerSheet(),
     );
+
+    if (selected != null && mounted) {
+      setState(() {
+        _selectedMusic = KeoMusicItem(
+          title: selected.title,
+          artist: selected.artist,
+          category: 'Trending',
+          url: selected.previewUrl,
+          artwork: selected.artworkUrl,
+        );
+      });
+
+      try {
+        await _creatorAudioPlayer.stop();
+        if (selected.previewUrl.isNotEmpty) {
+          await _creatorAudioPlayer.play(UrlSource(selected.previewUrl));
+        }
+      } catch (_) {}
+
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Selected & Playing: ${selected.title} - ${selected.artist} 🎵'),
+          backgroundColor: const Color(0xFF1877F2),
+          duration: const Duration(seconds: 2),
+        ),
+      );
+    }
   }
 
   void _addTextDialog() {
@@ -694,7 +537,7 @@ class _KeoStoryCreatorScreenState extends State<KeoStoryCreatorScreen> {
       videoPath: widget.isVideo ? widget.mediaFile.path : null,
       musicName: _selectedMusic?.title ?? 'KeoBeat Original',
       musicArtist: _selectedMusic?.artist,
-      musicUrl: null,
+      musicUrl: _selectedMusic?.url,
       text: _overlayText,
       textColor: _selectedTextColor.toARGB32(),
       textStyleIndex: ['Classic', 'Modern', 'Neon', 'Handwriting', 'Typewriter', 'Strong'].indexOf(_selectedFontFamily),

@@ -23,6 +23,14 @@ class _ChatsTabState extends State<ChatsTab> {
   int _unreadNotifications = 3;
   int _selectedFilter = 0;
 
+  @override
+  void initState() {
+    super.initState();
+    KeoStoryManager().loadStories().then((_) {
+      if (mounted) setState(() {});
+    });
+  }
+
   Future<void> _handleYourStoryTap() async {
     final storyManager = KeoStoryManager();
     storyManager.cleanExpiredStories();
