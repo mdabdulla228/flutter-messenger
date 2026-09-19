@@ -174,13 +174,21 @@ class KeoStoryManager {
     } catch (_) {}
   }
 
-  void addStory(KeoStoryItem story) {
+  static const int maxStoriesPerUser = 5;
+
+  bool canAddStory() {
     cleanExpiredStories();
-    if (myStories.length >= 10) {
-      myStories.removeAt(myStories.length - 1);
+    return myStories.length < maxStoriesPerUser;
+  }
+
+  bool addStory(KeoStoryItem story) {
+    cleanExpiredStories();
+    if (myStories.length >= maxStoriesPerUser) {
+      return false;
     }
     myStories.add(story);
     _save();
+    return true;
   }
 
   void deleteStory(String id) {

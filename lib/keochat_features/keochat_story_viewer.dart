@@ -585,7 +585,12 @@ class _KeoStoryViewerScreenState extends State<KeoStoryViewerScreen> {
                               ),
                             ),
                             TextButton.icon(
-                              onPressed: () => Navigator.pop(context),
+                              onPressed: () {
+                                try {
+                                  _audioPlayer.stop();
+                                } catch (_) {}
+                                Navigator.pop(context, 'ADD_STORY');
+                              },
                               icon: const Icon(Icons.add_circle_outline, color: Colors.white, size: 18),
                               label: const Text('Add story', style: TextStyle(color: Colors.white)),
                             ),

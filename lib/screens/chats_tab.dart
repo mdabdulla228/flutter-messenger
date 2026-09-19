@@ -35,7 +35,7 @@ class _ChatsTabState extends State<ChatsTab> {
     final storyManager = KeoStoryManager();
     storyManager.cleanExpiredStories();
     if (storyManager.myStories.isNotEmpty) {
-      Navigator.push(
+      final res = await Navigator.push(
         context,
         MaterialPageRoute(
           builder: (_) => KeoStoryViewerScreen(
@@ -45,7 +45,13 @@ class _ChatsTabState extends State<ChatsTab> {
             stories: storyManager.myStories,
           ),
         ),
-      ).then((_) => setState(() {}));
+      );
+      if (mounted) {
+        setState(() {});
+        if (res == 'ADD_STORY') {
+          _handleYourStoryTap();
+        }
+      }
       return;
     }
     
