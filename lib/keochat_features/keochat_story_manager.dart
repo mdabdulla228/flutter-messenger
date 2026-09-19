@@ -30,6 +30,7 @@ class KeoStoryItem {
   final double tagY;
   final double tagScale;
   final List<List<double>>? doodlePoints;
+  final int durationSeconds;
   final DateTime createdAt;
   final List<String> viewers;
 
@@ -62,6 +63,7 @@ class KeoStoryItem {
     this.tagY = 160.0,
     this.tagScale = 1.0,
     this.doodlePoints,
+    this.durationSeconds = 10,
     required this.createdAt,
     List<String>? viewers,
   }) : viewers = viewers ?? [];
@@ -96,6 +98,7 @@ class KeoStoryItem {
     'tagX': tagX,
     'tagY': tagY,
     'tagScale': tagScale,
+    'durationSeconds': durationSeconds,
     'createdAt': createdAt.toIso8601String(),
     'viewers': viewers,
       
@@ -130,6 +133,7 @@ class KeoStoryItem {
       tagX: (json['tagX'] as num?)?.toDouble() ?? 50.0,
       tagY: (json['tagY'] as num?)?.toDouble() ?? 160.0,
       tagScale: (json['tagScale'] as num?)?.toDouble() ?? 1.0,
+      durationSeconds: (json['durationSeconds'] as num?)?.toInt() ?? 10,
       createdAt: json['createdAt'] != null ? (DateTime.tryParse(json['createdAt']) ?? DateTime.now()) : DateTime.now(),
       viewers: (json['viewers'] as List<dynamic>?)?.map((e) => e.toString()).toList() ?? [],
     );
@@ -175,7 +179,7 @@ class KeoStoryManager {
     if (myStories.length >= 10) {
       myStories.removeAt(myStories.length - 1);
     }
-    myStories.insert(0, story);
+    myStories.add(story);
     _save();
   }
 

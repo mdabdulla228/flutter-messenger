@@ -30,6 +30,7 @@ class KeoStoryCreatorScreen extends StatefulWidget {
 }
 
 class _KeoStoryCreatorScreenState extends State<KeoStoryCreatorScreen> {
+  int _selectedDurationSeconds = 10;
   final AudioPlayer _creatorAudioPlayer = AudioPlayer();
   KeoMusicItem? _selectedMusic;
   String? _overlayText;
@@ -529,6 +530,111 @@ class _KeoStoryCreatorScreenState extends State<KeoStoryCreatorScreen> {
     );
   }
 
+  
+  void _openDurationSelector() {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: const Color(0xFF1C1E21),
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (ctx) {
+        final options = [
+          {'seconds': 5, 'label': '5 Seconds', 'desc': 'Quick flash'},
+          {'seconds': 10, 'label': '10 Seconds', 'desc': 'Standard story (Default)'},
+          {'seconds': 15, 'label': '15 Seconds', 'desc': 'Classic pace'},
+          {'seconds': 20, 'label': '20 Seconds', 'desc': 'Extended view'},
+          {'seconds': 30, 'label': '30 Seconds', 'desc': 'Deep reading'},
+          {'seconds': 60, 'label': '60 Seconds (1 Min)', 'desc': 'Maximum allowed time'},
+        ];
+
+        return SafeArea(
+          child: Padding(
+            padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 18),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    const Icon(Icons.timer, color: Color(0xFF1877F2), size: 24),
+                    const SizedBox(width: 10),
+                    const Text(
+                      'Story Duration',
+                      style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold),
+                    ),
+                    const Spacer(),
+                    IconButton(
+                      icon: const Icon(Icons.close, color: Colors.white70),
+                      onPressed: () => Navigator.pop(ctx),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  'Set how long friends can view this story (Max 1 minute)',
+                  style: TextStyle(color: Colors.white.withValues(alpha: 0.6), fontSize: 13),
+                ),
+                const SizedBox(height: 14),
+                ...options.map((opt) {
+                  final sec = opt['seconds'] as int;
+                  final isSelected = _selectedDurationSeconds == sec;
+                  return InkWell(
+                    onTap: () {
+                      setState(() {
+                        _selectedDurationSeconds = sec;
+                      });
+                      Navigator.pop(ctx);
+                    },
+                    child: Container(
+                      margin: const EdgeInsets.only(bottom: 8),
+                      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                      decoration: BoxDecoration(
+                        color: isSelected ? const Color(0xFF1877F2).withValues(alpha: 0.2) : Colors.white10,
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(
+                          color: isSelected ? const Color(0xFF1877F2) : Colors.transparent,
+                          width: 1.5,
+                        ),
+                      ),
+                      child: Row(
+                        children: [
+                          Icon(
+                            isSelected ? Icons.check_circle : Icons.radio_button_unchecked,
+                            color: isSelected ? const Color(0xFF1877F2) : Colors.white38,
+                            size: 20,
+                          ),
+                          const SizedBox(width: 12),
+                          Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                opt['label'] as String,
+                                style: TextStyle(
+                                  color: isSelected ? Colors.white : Colors.white.withValues(alpha: 0.85),
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 15,
+                                ),
+                              ),
+                              Text(
+                                opt['desc'] as String,
+                                style: TextStyle(color: Colors.white54, fontSize: 12),
+                              ),
+                            ],
+                          ),
+                        ],
+                      ),
+                    ),
+                  );
+                }),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+
   void _publishStory() {
     final manager = KeoStoryManager();
     final newStory = KeoStoryItem(
@@ -550,6 +656,7 @@ class _KeoStoryCreatorScreenState extends State<KeoStoryCreatorScreen> {
       stickerY: _stickerY,
       stickerScale: _stickerScale,
       filter: _selectedFilter,
+      durationSeconds: _selectedDurationSeconds,
       createdAt: DateTime.now(),
     );
 
@@ -969,6 +1076,7 @@ class _KeoStoryCreatorScreenState extends State<KeoStoryCreatorScreen> {
                 _buildRightAction(Icons.music_note, 'Music', _openMusicSelector),
                 _buildRightAction(Icons.person_add_alt_1_outlined, 'Tag', _openTagFriends),
                 _buildRightAction(Icons.auto_fix_high, 'Effects', _openEffects),
+                _buildRightAction(Icons.timer_outlined, '${_selectedDurationSeconds}s', _openDurationSelector),
                 _buildRightAction(Icons.draw, 'Doodle', () {
                   setState(() {
                   });

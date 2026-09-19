@@ -3,6 +3,8 @@ import 'dart:async';
 import 'dart:io';
 import 'dart:math' as math;
 import 'package:flutter/material.dart';
+import 'dart:ui' as ui;
+import 'package:audioplayers/audioplayers.dart';
 import 'keochat_story_manager.dart';
 
 class FloatingReaction {
@@ -31,6 +33,20 @@ class KeoStoryViewerScreen extends StatefulWidget {
 }
 
 class _KeoStoryViewerScreenState extends State<KeoStoryViewerScreen> {
+  final AudioPlayer _audioPlayer = AudioPlayer();
+
+  void _playStoryMusic() async {
+    try {
+      await _audioPlayer.stop();
+      if (widget.stories.isEmpty || _currentIndex >= widget.stories.length) return;
+      final currentStory = widget.stories[_currentIndex];
+      final url = currentStory.musicUrl;
+      if (url != null && url.isNotEmpty) {
+        await _audioPlayer.play(UrlSource(url));
+      }
+    } catch (_) {}
+  }
+
   int _currentIndex = 0;
   Timer? _storyTimer;
   double _progress = 0.0;
@@ -49,6 +65,7 @@ class _KeoStoryViewerScreenState extends State<KeoStoryViewerScreen> {
   @override
   void initState() {
     super.initState();
+    _playStoryMusic();
     _startStoryProgress();
     _commentFocusNode.addListener(() {
       if (_commentFocusNode.hasFocus) {
@@ -61,6 +78,7 @@ class _KeoStoryViewerScreenState extends State<KeoStoryViewerScreen> {
 
   void _startStoryProgress() {
     _storyTimer?.cancel();
+    try { _audioPlayer.stop(); _audioPlayer.dispose(); } catch (_) {}
     _storyTimer = Timer.periodic(const Duration(milliseconds: 50), (timer) {
       if (!mounted) return;
       if (_isPaused) return; // Paused when pressed and held
@@ -299,30 +317,61 @@ class _KeoStoryViewerScreenState extends State<KeoStoryViewerScreen> {
                     colorFilter = const ColorFilter.mode(Colors.grey, BlendMode.saturation);
                   }
 
-                  Widget mediaWidget = (currentStory.imagePath != null && File(currentStory.imagePath!).existsSync())
-                      ? Image.file(File(currentStory.imagePath!), fit: BoxFit.contain)
-                      : Container(
-                          decoration: const BoxDecoration(
-                            gradient: LinearGradient(
-                              colors: [Color(0xFF0F2027), Color(0xFF203A43), Color(0xFF2C5364)],
-                              begin: Alignment.topCenter,
-                              end: Alignment.bottomCenter,
+                  final hasImage = currentStory.imagePath != null && File(currentStory.imagePath!).existsSync();
+                  Widget mediaWidget;
+
+                  if (hasImage) {
+                    final file = File(currentStory.imagePath!);
+                    mediaWidget = Stack(
+                      fit: StackFit.expand,
+                      children: [
+                        // Dynamic blurred backdrop from the photo itself
+                        ImageFiltered(
+                          imageFilter: ui.ImageFilter.blur(sigmaX: 35, sigmaY: 35),
+                          child: Transform.scale(
+                            scale: 1.25,
+                            child: Image.file(
+                              file,
+                              fit: BoxFit.cover,
+                              alignment: Alignment.center,
                             ),
                           ),
-                          child: Center(
-                            child: Column(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                const Icon(Icons.auto_awesome, color: Colors.white70, size: 54),
-                                const SizedBox(height: 12),
-                                Text(
-                                  'KeoChat Story',
-                                  style: TextStyle(color: Colors.white.withValues(alpha: 0.9), fontSize: 24, fontWeight: FontWeight.bold),
-                                ),
-                              ],
-                            ),
+                        ),
+                        // Aesthetic ambient vignette overlay to remove harsh black bars
+                        Container(color: Colors.black.withValues(alpha: 0.22)),
+                        // Centered crisp image
+                        Center(
+                          child: Image.file(
+                            file,
+                            fit: BoxFit.contain,
                           ),
-                        );
+                        ),
+                      ],
+                    );
+                  } else {
+                    mediaWidget = Container(
+                      decoration: const BoxDecoration(
+                        gradient: LinearGradient(
+                          colors: [Color(0xFF0F2027), Color(0xFF203A43), Color(0xFF2C5364)],
+                          begin: Alignment.topCenter,
+                          end: Alignment.bottomCenter,
+                        ),
+                      ),
+                      child: Center(
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            const Icon(Icons.auto_awesome, color: Colors.white70, size: 54),
+                            const SizedBox(height: 12),
+                            Text(
+                              'KeoChat Story',
+                              style: TextStyle(color: Colors.white.withValues(alpha: 0.9), fontSize: 24, fontWeight: FontWeight.bold),
+                            ),
+                          ],
+                        ),
+                      ),
+                    );
+                  }
 
                   if (colorFilter != null) {
                     mediaWidget = ColorFiltered(colorFilter: colorFilter, child: mediaWidget);
@@ -416,7 +465,7 @@ class _KeoStoryViewerScreenState extends State<KeoStoryViewerScreen> {
                   padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
                   decoration: const BoxDecoration(
                     gradient: LinearGradient(
-                      colors: [Colors.black87, Colors.transparent],
+                      colors: [Colors.black54, Colors.transparent],
                       begin: Alignment.topCenter,
                       end: Alignment.bottomCenter,
                     ),
@@ -513,7 +562,7 @@ class _KeoStoryViewerScreenState extends State<KeoStoryViewerScreen> {
                   padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
                   decoration: const BoxDecoration(
                     gradient: LinearGradient(
-                      colors: [Colors.transparent, Colors.black87],
+                      colors: [Colors.transparent, Colors.black45],
                       begin: Alignment.topCenter,
                       end: Alignment.bottomCenter,
                     ),
