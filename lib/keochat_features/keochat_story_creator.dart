@@ -42,6 +42,9 @@ class _KeoStoryCreatorScreenState extends State<KeoStoryCreatorScreen> {
   double _stickerRotation = 0.0;
   double _baseStickerScale = 1.0;
   double _baseStickerRotation = 0.0;
+  bool _isDraggingTrash = false;
+  bool _isHoveringTrash = false;
+  String _draggingItemType = "";
 
   double _textX = 60.0;
   double _textY = 280.0;
@@ -734,7 +737,7 @@ class _KeoStoryCreatorScreenState extends State<KeoStoryCreatorScreen> {
             ),
           ),
 
-          // Draggable & Resizable Text overlay (Styled Font, Color & Background)
+          // Draggable & Resizable Text overlay with Facebook style gesture & No Cross Button
           if (_overlayText != null)
             Positioned(
               top: _textY,
@@ -744,85 +747,60 @@ class _KeoStoryCreatorScreenState extends State<KeoStoryCreatorScreen> {
                 onScaleStart: (details) {
                   _baseTextScale = _textScale;
                   _baseTextRotation = _textRotation;
+                  setState(() {
+                    _isDraggingTrash = true;
+                    _draggingItemType = "text";
+                    _isHoveringTrash = false;
+                  });
                 },
                 onScaleUpdate: (details) {
                   setState(() {
                     _textX += details.focalPointDelta.dx;
                     _textY += details.focalPointDelta.dy;
-                    if (details.scale != 1.0) {
-                      _textScale = (_baseTextScale * details.scale).clamp(0.3, 5.0);
-                    }
-                    if (details.rotation != 0.0) {
+                    if (details.pointerCount > 1) {
+                      _textScale = (_baseTextScale * details.scale).clamp(0.4, 5.0);
                       _textRotation = _baseTextRotation + details.rotation;
                     }
+                    final screenWidth = MediaQuery.of(context).size.width;
+                    final isNearTopCenter = details.focalPoint.dy < 160 &&
+                        (details.focalPoint.dx - screenWidth / 2).abs() < 100;
+                    _isHoveringTrash = isNearTopCenter;
                   });
                 },
                 onScaleEnd: (details) {
-                  _baseTextScale = _textScale;
-                  _baseTextRotation = _textRotation;
+                  setState(() {
+                    if (_isHoveringTrash && _draggingItemType == "text") {
+                      _overlayText = null;
+                    }
+                    _isDraggingTrash = false;
+                    _isHoveringTrash = false;
+                    _draggingItemType = "";
+                    _baseTextScale = _textScale;
+                    _baseTextRotation = _textRotation;
+                  });
                 },
                 child: Transform.rotate(
                   angle: _textRotation,
                   child: Transform.scale(
                     scale: _textScale,
-                    child: Stack(
-                      clipBehavior: Clip.none,
-                      children: [
-                        Padding(
-                          padding: const EdgeInsets.only(top: 14, right: 14),
-                          child: Container(
-                            padding: _textBackground
-                                ? const EdgeInsets.symmetric(horizontal: 14, vertical: 8)
-                                : const EdgeInsets.symmetric(horizontal: 6, vertical: 4),
-                            decoration: BoxDecoration(
-                              color: _textBackground ? Colors.black.withValues(alpha: 0.65) : Colors.transparent,
-                              borderRadius: BorderRadius.circular(10),
-                              border: _textBackground ? Border.all(color: Colors.white24) : null,
-                            ),
-                            child: Text(
-                              _overlayText ?? '',
-                              textAlign: TextAlign.center,
-                              style: _getStoryTextStyle(_selectedFontFamily, _selectedTextColor, fontSize: 24).copyWith(
-                                shadows: const [
-                                  Shadow(color: Colors.black87, blurRadius: 8, offset: Offset(0, 1)),
-                                ],
-                              ),
-                            ),
-                          ),
+                    child: Container(
+                      padding: _textBackground
+                          ? const EdgeInsets.symmetric(horizontal: 14, vertical: 8)
+                          : const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+                      decoration: BoxDecoration(
+                        color: _textBackground ? Colors.black.withValues(alpha: 0.65) : Colors.transparent,
+                        borderRadius: BorderRadius.circular(10),
+                        border: _textBackground ? Border.all(color: Colors.white24) : null,
+                      ),
+                      child: Text(
+                        _overlayText ?? '',
+                        textAlign: TextAlign.center,
+                        style: _getStoryTextStyle(_selectedFontFamily, _selectedTextColor, fontSize: 24).copyWith(
+                          shadows: const [
+                            Shadow(color: Colors.black87, blurRadius: 8, offset: Offset(0, 1)),
+                          ],
                         ),
-                        // Fixed-size delete button that never scales up and always deletes on touch
-                        Positioned(
-                          top: 0,
-                          right: 0,
-                          child: Transform.scale(
-                            scale: 1.0 / _textScale,
-                            child: Listener(
-                              behavior: HitTestBehavior.opaque,
-                              onPointerDown: (_) {
-                                setState(() => _overlayText = null);
-                              },
-                              child: GestureDetector(
-                                onTap: () => setState(() => _overlayText = null),
-                                child: Container(
-                                  width: 32,
-                                  height: 32,
-                                  decoration: BoxDecoration(
-                                    color: Colors.black.withValues(alpha: 0.85),
-                                    shape: BoxShape.circle,
-                                    border: Border.all(color: Colors.white, width: 1.5),
-                                    boxShadow: const [
-                                      BoxShadow(color: Colors.black45, blurRadius: 4, offset: Offset(0, 2)),
-                                    ],
-                                  ),
-                                  child: const Center(
-                                    child: Icon(Icons.close, color: Colors.white, size: 18),
-                                  ),
-                                ),
-                              ),
-                            ),
-                          ),
-                        ),
-                      ],
+                      ),
                     ),
                   ),
                 ),
@@ -830,6 +808,7 @@ class _KeoStoryCreatorScreenState extends State<KeoStoryCreatorScreen> {
             ),
 
           // Draggable & Resizable Sticker overlay (Smooth Pinch, Rotate & Drag)
+          // Draggable, Resizable & Rotatable Sticker overlay with Facebook Style gesture & No Cross Button
           if (_selectedSticker != null)
             Positioned(
               top: _stickerY,
@@ -838,82 +817,58 @@ class _KeoStoryCreatorScreenState extends State<KeoStoryCreatorScreen> {
                 onScaleStart: (details) {
                   _baseStickerScale = _stickerScale;
                   _baseStickerRotation = _stickerRotation;
+                  setState(() {
+                    _isDraggingTrash = true;
+                    _draggingItemType = "sticker";
+                    _isHoveringTrash = false;
+                  });
                 },
                 onScaleUpdate: (details) {
                   setState(() {
                     _stickerX += details.focalPointDelta.dx;
                     _stickerY += details.focalPointDelta.dy;
-                    if (details.scale != 1.0) {
-                      _stickerScale = (_baseStickerScale * details.scale).clamp(0.3, 5.0);
-                    }
-                    if (details.rotation != 0.0) {
+                    if (details.pointerCount > 1) {
+                      _stickerScale = (_baseStickerScale * details.scale).clamp(0.4, 5.0);
                       _stickerRotation = _baseStickerRotation + details.rotation;
                     }
+                    final screenWidth = MediaQuery.of(context).size.width;
+                    final isNearTopCenter = details.focalPoint.dy < 160 &&
+                        (details.focalPoint.dx - screenWidth / 2).abs() < 100;
+                    _isHoveringTrash = isNearTopCenter;
                   });
                 },
                 onScaleEnd: (details) {
-                  _baseStickerScale = _stickerScale;
-                  _baseStickerRotation = _stickerRotation;
+                  setState(() {
+                    if (_isHoveringTrash && _draggingItemType == "sticker") {
+                      _selectedSticker = null;
+                    }
+                    _isDraggingTrash = false;
+                    _isHoveringTrash = false;
+                    _draggingItemType = "";
+                    _baseStickerScale = _stickerScale;
+                    _baseStickerRotation = _stickerRotation;
+                  });
                 },
                 child: Transform.rotate(
                   angle: _stickerRotation,
                   child: Transform.scale(
                     scale: _stickerScale,
-                    child: Stack(
-                      clipBehavior: Clip.none,
-                      children: [
-                        Padding(
-                          padding: const EdgeInsets.only(top: 14, right: 14, left: 8, bottom: 8),
-                          child: Text(
-                            _selectedSticker!,
-                            style: const TextStyle(
-                              fontSize: 60,
-                              shadows: [
-                                Shadow(color: Colors.black45, blurRadius: 10, offset: Offset(0, 3)),
-                              ],
-                            ),
-                          ),
+                    child: Padding(
+                      padding: const EdgeInsets.all(8.0),
+                      child: Text(
+                        _selectedSticker ?? "",
+                        style: const TextStyle(
+                          fontSize: 60,
+                          shadows: [
+                            Shadow(color: Colors.black45, blurRadius: 10, offset: Offset(0, 3)),
+                          ],
                         ),
-                        // Fixed-size delete button that never scales up and always deletes on touch
-                        Positioned(
-                          top: 0,
-                          right: 0,
-                          child: Transform.scale(
-                            scale: 1.0 / _stickerScale,
-                            child: Listener(
-                              behavior: HitTestBehavior.opaque,
-                              onPointerDown: (_) {
-                                setState(() => _selectedSticker = null);
-                              },
-                              child: GestureDetector(
-                                onTap: () => setState(() => _selectedSticker = null),
-                                child: Container(
-                                  width: 32,
-                                  height: 32,
-                                  decoration: BoxDecoration(
-                                    color: Colors.black.withValues(alpha: 0.85),
-                                    shape: BoxShape.circle,
-                                    border: Border.all(color: Colors.white, width: 1.5),
-                                    boxShadow: const [
-                                      BoxShadow(color: Colors.black45, blurRadius: 4, offset: Offset(0, 2)),
-                                    ],
-                                  ),
-                                  child: const Center(
-                                    child: Icon(Icons.close, color: Colors.white, size: 18),
-                                  ),
-                                ),
-                              ),
-                            ),
-                          ),
-                        ),
-                      ],
+                      ),
                     ),
                   ),
                 ),
               ),
             ),
-
-          // Draggable Tag Friend Sticker Overlay (Facebook Style)
           if (_taggedFriend != null)
             Positioned(
               top: _tagY,
@@ -1235,7 +1190,42 @@ class _KeoStoryCreatorScreenState extends State<KeoStoryCreatorScreen> {
                 Shadow(color: Colors.black87, blurRadius: 4),
               ]),
             ),
-          ],
+  
+          // Facebook Style Top Delete Trash Can (Appears during Dragging)
+          if (_isDraggingTrash)
+            Positioned(
+              top: MediaQuery.of(context).padding.top + 12,
+              left: 0,
+              right: 0,
+              child: Center(
+                child: AnimatedContainer(
+                  duration: const Duration(milliseconds: 180),
+                  padding: EdgeInsets.all(_isHoveringTrash ? 18 : 14),
+                  decoration: BoxDecoration(
+                    color: _isHoveringTrash ? Colors.redAccent.withValues(alpha: 0.95) : Colors.black.withValues(alpha: 0.75),
+                    shape: BoxShape.circle,
+                    border: Border.all(
+                      color: _isHoveringTrash ? Colors.white : Colors.white70,
+                      width: _isHoveringTrash ? 3 : 1.5,
+                    ),
+                    boxShadow: [
+                      BoxShadow(
+                        color: _isHoveringTrash ? Colors.red.withValues(alpha: 0.6) : Colors.black54,
+                        blurRadius: _isHoveringTrash ? 20 : 10,
+                        spreadRadius: _isHoveringTrash ? 4 : 1,
+                      ),
+                    ],
+                  ),
+                  child: AnimatedSwitcher(
+                    duration: const Duration(milliseconds: 180),
+                    child: _isHoveringTrash
+                        ? const Icon(Icons.delete_forever_rounded, color: Colors.white, size: 36, key: ValueKey('open_bin'))
+                        : const Icon(Icons.delete_outline_rounded, color: Colors.white, size: 28, key: ValueKey('closed_bin')),
+                  ),
+                ),
+              ),
+            ),
+        ],
         ),
       ),
     );
