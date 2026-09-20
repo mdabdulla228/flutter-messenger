@@ -303,6 +303,26 @@ class _KeoStoryViewerScreenState extends State<KeoStoryViewerScreen> {
         child: Stack(
           children: [
             // 1. Story Media in Center with Effects & Overlays
+            if (currentStory.imagePath != null && File(currentStory.imagePath!).existsSync()) ...[
+              // Adaptive Background matching image colors (Facebook style)
+              Positioned.fill(
+                child: Image.file(
+                  File(currentStory.imagePath!),
+                  fit: BoxFit.cover,
+                ),
+              ),
+              Positioned.fill(
+                child: Container(
+                  color: Colors.black.withOpacity(0.4),
+                ),
+              ),
+              Positioned.fill(
+                child: BackdropFilter(
+                  filter: ui.ImageFilter.blur(sigmaX: 30, sigmaY: 30),
+                  child: const SizedBox.expand(),
+                ),
+              ),
+            ],
             Positioned.fill(
               child: Builder(
                 builder: (context) {
@@ -345,7 +365,7 @@ class _KeoStoryViewerScreenState extends State<KeoStoryViewerScreen> {
                             const SizedBox(height: 12),
                             Text(
                               'KeoChat Story',
-                              style: TextStyle(color: Colors.white.withValues(alpha: 0.9), fontSize: 24, fontWeight: FontWeight.bold),
+                              style: TextStyle(color: Colors.white.withOpacity(0.9), fontSize: 24, fontWeight: FontWeight.bold),
                             ),
                           ],
                         ),
@@ -362,57 +382,67 @@ class _KeoStoryViewerScreenState extends State<KeoStoryViewerScreen> {
             ),
 
             // Text overlay only if present and non-empty
+            if (currentStory.text != null && currentStory.text!.trim().isNotEmpty)
               Positioned(
                 top: currentStory.textY,
                 left: currentStory.textX,
-                child: Transform.scale(
-                  scale: currentStory.textScale,
-                  child: Builder(
-                    builder: (context) {
-                      final textColor = Color(currentStory.textColor);
-                      final fontIdx = currentStory.textStyleIndex;
-                      TextStyle style;
-                      switch (fontIdx) {
-                        case 1:
-                          style = TextStyle(color: textColor, fontSize: 24, fontWeight: FontWeight.w900, letterSpacing: 1.2);
-                          break;
-                        case 2:
-                          style = TextStyle(
-                            color: textColor,
-                            fontSize: 24,
-                            fontWeight: FontWeight.bold,
-                            shadows: [
-                              Shadow(color: textColor.withValues(alpha: 0.9), blurRadius: 16),
-                              Shadow(color: Colors.white.withValues(alpha: 0.8), blurRadius: 8),
-                            ],
-                          );
-                          break;
-                        case 3:
-                          style = TextStyle(color: textColor, fontSize: 24, fontStyle: FontStyle.italic, fontWeight: FontWeight.w600);
-                          break;
-                        case 4:
-                          style = TextStyle(color: textColor, fontSize: 24, fontFamily: 'monospace', fontWeight: FontWeight.w600);
-                          break;
-                        case 5:
-                          style = TextStyle(color: textColor, fontSize: 24, fontWeight: FontWeight.bold, letterSpacing: -0.5);
-                          break;
-                        default:
-                          style = TextStyle(color: textColor, fontSize: 24, fontWeight: FontWeight.w700);
-                      }
+                child: Transform.rotate(
+                  angle: currentStory.textRotation,
+                  child: Transform.scale(
+                    scale: currentStory.textScale,
+                    child: Builder(
+                      builder: (context) {
+                        final textColor = Color(currentStory.textColor);
+                        final fontIdx = currentStory.textStyleIndex;
+                        TextStyle style;
+                        switch (fontIdx) {
+                          case 1:
+                            style = TextStyle(color: textColor, fontSize: 24, fontWeight: FontWeight.w900, letterSpacing: 1.2);
+                            break;
+                          case 2:
+                            style = TextStyle(
+                              color: textColor,
+                              fontSize: 24,
+                              fontWeight: FontWeight.bold,
+                              shadows: [
+                                Shadow(color: textColor.withOpacity(0.9), blurRadius: 16),
+                                const Shadow(color: Colors.white, blurRadius: 8),
+                              ],
+                            );
+                            break;
+                          case 3:
+                            style = TextStyle(color: textColor, fontSize: 24, fontStyle: FontStyle.italic, fontWeight: FontWeight.w600);
+                            break;
+                          case 4:
+                            style = TextStyle(color: textColor, fontSize: 24, fontFamily: 'monospace', fontWeight: FontWeight.w600);
+                            break;
+                          case 5:
+                            style = TextStyle(color: textColor, fontSize: 24, fontWeight: FontWeight.bold, letterSpacing: -0.5);
+                            break;
+                          default:
+                            style = TextStyle(color: textColor, fontSize: 24, fontWeight: FontWeight.w700);
+                        }
 
-                      return Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-                        decoration: BoxDecoration(
-                          color: currentStory.textHasBackground ? Colors.black.withValues(alpha: 0.65) : Colors.transparent,
-                          borderRadius: BorderRadius.circular(12),
-                          border: currentStory.textHasBackground ? Border.all(color: Colors.white24) : null,
-                        ),
-                        child: Text(currentStory.text!,
-                          textAlign: TextAlign.center,
-                          style: style,
-                        ),
-                      );
-                    },
+                        return Container(
+                          padding: currentStory.textHasBackground
+                              ? const EdgeInsets.symmetric(horizontal: 14, vertical: 8)
+                              : EdgeInsets.zero,
+                          decoration: BoxDecoration(
+                            color: currentStory.textHasBackground ? Colors.black.withOpacity(0.65) : Colors.transparent,
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                          child: Text(
+                            currentStory.text!,
+                            textAlign: TextAlign.center,
+                            style: style.copyWith(
+                              shadows: [
+                                const Shadow(color: Colors.black87, blurRadius: 8, offset: Offset(0, 1)),
+                              ],
+                            ),
+                          ),
+                        );
+                      },
+                    ),
                   ),
                 ),
               ),
@@ -422,15 +452,22 @@ class _KeoStoryViewerScreenState extends State<KeoStoryViewerScreen> {
               Positioned(
                 top: currentStory.stickerY,
                 left: currentStory.stickerX,
-                child: Transform.scale(
-                  scale: currentStory.stickerScale,
-                  child: Text(
-                    currentStory.sticker!,
-                    style: const TextStyle(fontSize: 48),
+                child: Transform.rotate(
+                  angle: currentStory.stickerRotation,
+                  child: Transform.scale(
+                    scale: currentStory.stickerScale,
+                    child: Text(
+                      currentStory.sticker!,
+                      style: const TextStyle(
+                        fontSize: 60,
+                        shadows: [
+                          Shadow(color: Colors.black45, blurRadius: 10, offset: Offset(0, 3)),
+                        ],
+                      ),
+                    ),
                   ),
                 ),
               ),
-
             // 2. Floating Reactions
             ..._floatingReactions.map((reaction) => _buildFloatingReactionWidget(reaction)),
 

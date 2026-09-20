@@ -46,14 +46,18 @@ class _KeoStoryCreatorScreenState extends State<KeoStoryCreatorScreen> {
   double _textX = 60.0;
   double _textY = 280.0;
   double _textScale = 1.0;
+  double _textRotation = 0.0;
+  double _baseTextScale = 1.0;
+  double _baseTextRotation = 0.0;
   Color _selectedTextColor = Colors.white;
   String _selectedFontFamily = 'Classic';
-  bool _textBackground = true;
+  bool _textBackground = false;
 
   String? _taggedFriend;
   double _tagX = 40.0;
   double _tagY = 140.0;
   double _tagScale = 1.0;
+  double _baseTagScale = 1.0;
 
   bool _isDoodleMode = false;
   Color _selectedDoodleColor = Colors.white;
@@ -176,6 +180,9 @@ class _KeoStoryCreatorScreenState extends State<KeoStoryCreatorScreen> {
                             ),
                             tooltip: 'Toggle Background',
                             onPressed: () {
+                              setModalState(() {
+                                tempBg = !tempBg;
+                              });
                             },
                           ),
                           ElevatedButton(
@@ -657,10 +664,12 @@ class _KeoStoryCreatorScreenState extends State<KeoStoryCreatorScreen> {
       textX: _textX,
       textY: _textY,
       textScale: _textScale,
+      textRotation: _textRotation,
       sticker: _selectedSticker,
       stickerX: _stickerX,
       stickerY: _stickerY,
       stickerScale: _stickerScale,
+      stickerRotation: _stickerRotation,
       filter: _selectedFilter,
       durationSeconds: _selectedDurationSeconds,
       createdAt: DateTime.now(),
@@ -732,178 +741,262 @@ class _KeoStoryCreatorScreenState extends State<KeoStoryCreatorScreen> {
               left: _textX,
               child: GestureDetector(
                 onDoubleTap: _addTextDialog,
+                onScaleStart: (details) {
+                  _baseTextScale = _textScale;
+                  _baseTextRotation = _textRotation;
+                },
                 onScaleUpdate: (details) {
                   setState(() {
                     _textX += details.focalPointDelta.dx;
                     _textY += details.focalPointDelta.dy;
                     if (details.scale != 1.0) {
-                      _textScale = (_textScale * details.scale).clamp(0.5, 4.0);
+                      _textScale = (_baseTextScale * details.scale).clamp(0.3, 5.0);
+                    }
+                    if (details.rotation != 0.0) {
+                      _textRotation = _baseTextRotation + details.rotation;
                     }
                   });
                 },
-                child: Transform.scale(
-                  scale: _textScale,
-                  child: Stack(
-                    clipBehavior: Clip.none,
-                    children: [
-                      Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-                        decoration: BoxDecoration(
-                          color: _textBackground ? Colors.black.withValues(alpha: 0.65) : Colors.transparent,
-                          borderRadius: BorderRadius.circular(12),
-                          border: _textBackground ? Border.all(color: Colors.white24) : null,
-                        ),
-                        child: Text(
-                          _overlayText ?? '',
-                          textAlign: TextAlign.center,
-                          style: _getStoryTextStyle(_selectedFontFamily, _selectedTextColor, fontSize: 24),
-                        ),
-                      ),
-                      Positioned(
-                        top: -10,
-                        right: -10,
-                        child: GestureDetector(
-                          onTap: () => setState(() => _overlayText = null),
+                onScaleEnd: (details) {
+                  _baseTextScale = _textScale;
+                  _baseTextRotation = _textRotation;
+                },
+                child: Transform.rotate(
+                  angle: _textRotation,
+                  child: Transform.scale(
+                    scale: _textScale,
+                    child: Stack(
+                      clipBehavior: Clip.none,
+                      children: [
+                        Padding(
+                          padding: const EdgeInsets.only(top: 14, right: 14),
                           child: Container(
-                            padding: const EdgeInsets.all(4),
-                            decoration: const BoxDecoration(
-                              color: Colors.black87,
-                              shape: BoxShape.circle,
+                            padding: _textBackground
+                                ? const EdgeInsets.symmetric(horizontal: 14, vertical: 8)
+                                : const EdgeInsets.symmetric(horizontal: 6, vertical: 4),
+                            decoration: BoxDecoration(
+                              color: _textBackground ? Colors.black.withOpacity(0.65) : Colors.transparent,
+                              borderRadius: BorderRadius.circular(10),
+                              border: _textBackground ? Border.all(color: Colors.white24) : null,
                             ),
-                            child: const Icon(Icons.close, color: Colors.white, size: 14),
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-            ),
-            // Draggable & Resizable Sticker overlay (Smooth Pinch, Rotate & Drag)
-            if (_selectedSticker != null)
-              Positioned(
-                top: _stickerY,
-                left: _stickerX,
-                child: GestureDetector(
-                  onScaleStart: (details) {
-                    _baseStickerScale = _stickerScale;
-                    _baseStickerRotation = _stickerRotation;
-                  },
-                  onScaleUpdate: (details) {
-                    setState(() {
-                      _stickerX += details.focalPointDelta.dx;
-                      _stickerY += details.focalPointDelta.dy;
-                      if (details.scale != 1.0) {
-                        _stickerScale = (_baseStickerScale * details.scale).clamp(0.3, 4.0);
-                      }
-                      if (details.rotation != 0.0) {
-                        _stickerRotation = _baseStickerRotation + details.rotation;
-                      }
-                    });
-                  },
-                  child: Transform.rotate(
-                    angle: _stickerRotation,
-                    child: Transform.scale(
-                      scale: _stickerScale,
-                      child: Stack(
-                        clipBehavior: Clip.none,
-                        children: [
-                          Padding(
-                            padding: const EdgeInsets.all(8.0),
                             child: Text(
-                              _selectedSticker!,
-                              style: const TextStyle(
-                                fontSize: 60,
-                                shadows: [
-                                  Shadow(color: Colors.black45, blurRadius: 10, offset: Offset(0, 3)),
+                              _overlayText ?? '',
+                              textAlign: TextAlign.center,
+                              style: _getStoryTextStyle(_selectedFontFamily, _selectedTextColor, fontSize: 24).copyWith(
+                                shadows: const [
+                                  Shadow(color: Colors.black87, blurRadius: 8, offset: Offset(0, 1)),
                                 ],
                               ),
                             ),
                           ),
-                          Positioned(
-                            top: 0,
-                            right: 0,
-                            child: GestureDetector(
-                              onTap: () => setState(() => _selectedSticker = null),
-                              child: Container(
-                                padding: const EdgeInsets.all(4),
-                                decoration: const BoxDecoration(
-                                  color: Colors.black87,
-                                  shape: BoxShape.circle,
+                        ),
+                        // Fixed-size delete button that never scales up and always deletes on touch
+                        Positioned(
+                          top: 0,
+                          right: 0,
+                          child: Transform.scale(
+                            scale: 1.0 / _textScale,
+                            child: Listener(
+                              behavior: HitTestBehavior.opaque,
+                              onPointerDown: (_) {
+                                setState(() => _overlayText = null);
+                              },
+                              child: GestureDetector(
+                                onTap: () => setState(() => _overlayText = null),
+                                child: Container(
+                                  width: 32,
+                                  height: 32,
+                                  decoration: BoxDecoration(
+                                    color: Colors.black.withOpacity(0.85),
+                                    shape: BoxShape.circle,
+                                    border: Border.all(color: Colors.white, width: 1.5),
+                                    boxShadow: const [
+                                      BoxShadow(color: Colors.black45, blurRadius: 4, offset: Offset(0, 2)),
+                                    ],
+                                  ),
+                                  child: const Center(
+                                    child: Icon(Icons.close, color: Colors.white, size: 18),
+                                  ),
                                 ),
-                                child: const Icon(Icons.close, color: Colors.white, size: 14),
                               ),
                             ),
                           ),
-                        ],
-                      ),
+                        ),
+                      ],
                     ),
                   ),
                 ),
               ),
+            ),
+
+          // Draggable & Resizable Sticker overlay (Smooth Pinch, Rotate & Drag)
+          if (_selectedSticker != null)
+            Positioned(
+              top: _stickerY,
+              left: _stickerX,
+              child: GestureDetector(
+                onScaleStart: (details) {
+                  _baseStickerScale = _stickerScale;
+                  _baseStickerRotation = _stickerRotation;
+                },
+                onScaleUpdate: (details) {
+                  setState(() {
+                    _stickerX += details.focalPointDelta.dx;
+                    _stickerY += details.focalPointDelta.dy;
+                    if (details.scale != 1.0) {
+                      _stickerScale = (_baseStickerScale * details.scale).clamp(0.3, 5.0);
+                    }
+                    if (details.rotation != 0.0) {
+                      _stickerRotation = _baseStickerRotation + details.rotation;
+                    }
+                  });
+                },
+                onScaleEnd: (details) {
+                  _baseStickerScale = _stickerScale;
+                  _baseStickerRotation = _stickerRotation;
+                },
+                child: Transform.rotate(
+                  angle: _stickerRotation,
+                  child: Transform.scale(
+                    scale: _stickerScale,
+                    child: Stack(
+                      clipBehavior: Clip.none,
+                      children: [
+                        Padding(
+                          padding: const EdgeInsets.only(top: 14, right: 14, left: 8, bottom: 8),
+                          child: Text(
+                            _selectedSticker!,
+                            style: const TextStyle(
+                              fontSize: 60,
+                              shadows: [
+                                Shadow(color: Colors.black45, blurRadius: 10, offset: Offset(0, 3)),
+                              ],
+                            ),
+                          ),
+                        ),
+                        // Fixed-size delete button that never scales up and always deletes on touch
+                        Positioned(
+                          top: 0,
+                          right: 0,
+                          child: Transform.scale(
+                            scale: 1.0 / _stickerScale,
+                            child: Listener(
+                              behavior: HitTestBehavior.opaque,
+                              onPointerDown: (_) {
+                                setState(() => _selectedSticker = null);
+                              },
+                              child: GestureDetector(
+                                onTap: () => setState(() => _selectedSticker = null),
+                                child: Container(
+                                  width: 32,
+                                  height: 32,
+                                  decoration: BoxDecoration(
+                                    color: Colors.black.withOpacity(0.85),
+                                    shape: BoxShape.circle,
+                                    border: Border.all(color: Colors.white, width: 1.5),
+                                    boxShadow: const [
+                                      BoxShadow(color: Colors.black45, blurRadius: 4, offset: Offset(0, 2)),
+                                    ],
+                                  ),
+                                  child: const Center(
+                                    child: Icon(Icons.close, color: Colors.white, size: 18),
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+            ),
+
           // Draggable Tag Friend Sticker Overlay (Facebook Style)
           if (_taggedFriend != null)
             Positioned(
               top: _tagY,
               left: _tagX,
               child: GestureDetector(
+                onScaleStart: (details) {
+                  _baseTagScale = _tagScale;
+                },
                 onScaleUpdate: (details) {
                   setState(() {
                     _tagX += details.focalPointDelta.dx;
                     _tagY += details.focalPointDelta.dy;
                     if (details.scale != 1.0) {
-                      _tagScale = (_tagScale * details.scale).clamp(0.6, 3.0);
+                      _tagScale = (_baseTagScale * details.scale).clamp(0.4, 4.0);
                     }
                   });
+                },
+                onScaleEnd: (details) {
+                  _baseTagScale = _tagScale;
                 },
                 child: Transform.scale(
                   scale: _tagScale,
                   child: Stack(
                     clipBehavior: Clip.none,
                     children: [
-                      Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-                        decoration: BoxDecoration(
-                          color: Colors.black.withValues(alpha: 0.75),
-                          borderRadius: BorderRadius.circular(20),
-                          border: Border.all(color: const Color(0xFF1877F2), width: 1.5),
-                          boxShadow: [
-                            BoxShadow(
-                              color: Colors.black.withValues(alpha: 0.3),
-                              blurRadius: 8,
-                              offset: const Offset(0, 2),
-                            ),
-                          ],
-                        ),
-                        child: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            const Icon(Icons.person, color: Color(0xFF1877F2), size: 18),
-                            const SizedBox(width: 6),
-                            Text(
-                              '@${_taggedFriend!}',
-                              style: const TextStyle(
-                                color: Colors.white,
-                                fontSize: 16,
-                                fontWeight: FontWeight.bold,
-                                letterSpacing: 0.2,
+                      Padding(
+                        padding: const EdgeInsets.only(top: 12, right: 12),
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                          decoration: BoxDecoration(
+                            color: Colors.black.withOpacity(0.75),
+                            borderRadius: BorderRadius.circular(20),
+                            border: Border.all(color: const Color(0xFF1877F2), width: 1.5),
+                            boxShadow: [
+                              BoxShadow(
+                                color: Colors.black.withOpacity(0.3),
+                                blurRadius: 8,
+                                offset: const Offset(0, 2),
                               ),
-                            ),
-                          ],
+                            ],
+                          ),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              const Icon(Icons.person, color: Color(0xFF1877F2), size: 16),
+                              const SizedBox(width: 6),
+                              Text(
+                                _taggedFriend!,
+                                style: const TextStyle(
+                                  color: Colors.white,
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 14,
+                                ),
+                              ),
+                            ],
+                          ),
                         ),
                       ),
                       Positioned(
-                        top: -8,
-                        right: -8,
-                        child: GestureDetector(
-                          onTap: () => setState(() => _taggedFriend = null),
-                          child: Container(
-                            padding: const EdgeInsets.all(3),
-                            decoration: const BoxDecoration(
-                              color: Colors.black87,
-                              shape: BoxShape.circle,
+                        top: 0,
+                        right: 0,
+                        child: Transform.scale(
+                          scale: 1.0 / _tagScale,
+                          child: Listener(
+                            behavior: HitTestBehavior.opaque,
+                            onPointerDown: (_) {
+                              setState(() => _taggedFriend = null);
+                            },
+                            child: GestureDetector(
+                              onTap: () => setState(() => _taggedFriend = null),
+                              child: Container(
+                                width: 28,
+                                height: 28,
+                                decoration: BoxDecoration(
+                                  color: Colors.black.withOpacity(0.85),
+                                  shape: BoxShape.circle,
+                                  border: Border.all(color: Colors.white, width: 1.5),
+                                ),
+                                child: const Center(
+                                  child: Icon(Icons.close, color: Colors.white, size: 16),
+                                ),
+                              ),
                             ),
-                            child: const Icon(Icons.close, color: Colors.white, size: 14),
                           ),
                         ),
                       ),
@@ -912,7 +1005,6 @@ class _KeoStoryCreatorScreenState extends State<KeoStoryCreatorScreen> {
                 ),
               ),
             ),
-
           // Freehand Doodle Drawing Canvas
           Positioned.fill(
             child: IgnorePointer(
