@@ -322,31 +322,11 @@ class _KeoStoryViewerScreenState extends State<KeoStoryViewerScreen> {
 
                   if (hasImage) {
                     final file = File(currentStory.imagePath!);
-                    mediaWidget = Stack(
-                      fit: StackFit.expand,
-                      children: [
-                        // Dynamic blurred backdrop from the photo itself
-                        ImageFiltered(
-                          imageFilter: ui.ImageFilter.blur(sigmaX: 35, sigmaY: 35),
-                          child: Transform.scale(
-                            scale: 1.25,
-                            child: Image.file(
-                              file,
-                              fit: BoxFit.cover,
-                              alignment: Alignment.center,
-                            ),
-                          ),
-                        ),
-                        // Aesthetic ambient vignette overlay to remove harsh black bars
-                        Container(color: Colors.black.withValues(alpha: 0.22)),
-                        // Centered crisp image
-                        Center(
-                          child: Image.file(
-                            file,
-                            fit: BoxFit.contain,
-                          ),
-                        ),
-                      ],
+                    mediaWidget = Center(
+                      child: Image.file(
+                        file,
+                        fit: BoxFit.contain,
+                      ),
                     );
                   } else {
                     mediaWidget = Container(

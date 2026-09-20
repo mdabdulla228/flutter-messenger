@@ -39,6 +39,9 @@ class _KeoStoryCreatorScreenState extends State<KeoStoryCreatorScreen> {
   double _stickerX = 140.0;
   double _stickerY = 180.0;
   double _stickerScale = 1.0;
+  double _stickerRotation = 0.0;
+  double _baseStickerScale = 1.0;
+  double _baseStickerRotation = 0.0;
 
   double _textX = 60.0;
   double _textY = 280.0;
@@ -339,6 +342,9 @@ class _KeoStoryCreatorScreenState extends State<KeoStoryCreatorScreen> {
                         _stickerX = 140.0;
                         _stickerY = 220.0;
                         _stickerScale = 1.0;
+                        _stickerRotation = 0.0;
+                        _baseStickerScale = 1.0;
+                        _baseStickerRotation = 0.0;
                       });
                       Navigator.pop(ctx);
                     },
@@ -773,59 +779,68 @@ class _KeoStoryCreatorScreenState extends State<KeoStoryCreatorScreen> {
                 ),
               ),
             ),
-
-          // Draggable & Resizable Sticker overlay
-          if (_selectedSticker != null)
-            Positioned(
-              top: _stickerY,
-              left: _stickerX,
-              child: GestureDetector(
-                onScaleUpdate: (details) {
-                  setState(() {
-                    _stickerX += details.focalPointDelta.dx;
-                    _stickerY += details.focalPointDelta.dy;
-                    if (details.scale != 1.0) {
-                      _stickerScale = (_stickerScale * details.scale).clamp(0.5, 4.0);
-                    }
-                  });
-                },
-                child: Transform.scale(
-                  scale: _stickerScale,
-                  child: Stack(
-                    clipBehavior: Clip.none,
-                    children: [
-                      Padding(
-                        padding: const EdgeInsets.all(8.0),
-                        child: Text(_selectedSticker!,
-                          style: const TextStyle(
-                            fontSize: 60,
-                            shadows: [
-                              Shadow(color: Colors.black45, blurRadius: 10, offset: Offset(0, 3)),
-                            ],
-                          ),
-                        ),
-                      ),
-                      Positioned(
-                        top: 0,
-                        right: 0,
-                        child: GestureDetector(
-                          onTap: () => setState(() => _selectedSticker = null),
-                          child: Container(
-                            padding: const EdgeInsets.all(4),
-                            decoration: const BoxDecoration(
-                              color: Colors.black87,
-                              shape: BoxShape.circle,
+            // Draggable & Resizable Sticker overlay (Smooth Pinch, Rotate & Drag)
+            if (_selectedSticker != null)
+              Positioned(
+                top: _stickerY,
+                left: _stickerX,
+                child: GestureDetector(
+                  onScaleStart: (details) {
+                    _baseStickerScale = _stickerScale;
+                    _baseStickerRotation = _stickerRotation;
+                  },
+                  onScaleUpdate: (details) {
+                    setState(() {
+                      _stickerX += details.focalPointDelta.dx;
+                      _stickerY += details.focalPointDelta.dy;
+                      if (details.scale != 1.0) {
+                        _stickerScale = (_baseStickerScale * details.scale).clamp(0.3, 4.0);
+                      }
+                      if (details.rotation != 0.0) {
+                        _stickerRotation = _baseStickerRotation + details.rotation;
+                      }
+                    });
+                  },
+                  child: Transform.rotate(
+                    angle: _stickerRotation,
+                    child: Transform.scale(
+                      scale: _stickerScale,
+                      child: Stack(
+                        clipBehavior: Clip.none,
+                        children: [
+                          Padding(
+                            padding: const EdgeInsets.all(8.0),
+                            child: Text(
+                              _selectedSticker!,
+                              style: const TextStyle(
+                                fontSize: 60,
+                                shadows: [
+                                  Shadow(color: Colors.black45, blurRadius: 10, offset: Offset(0, 3)),
+                                ],
+                              ),
                             ),
-                            child: const Icon(Icons.close, color: Colors.white, size: 14),
                           ),
-                        ),
+                          Positioned(
+                            top: 0,
+                            right: 0,
+                            child: GestureDetector(
+                              onTap: () => setState(() => _selectedSticker = null),
+                              child: Container(
+                                padding: const EdgeInsets.all(4),
+                                decoration: const BoxDecoration(
+                                  color: Colors.black87,
+                                  shape: BoxShape.circle,
+                                ),
+                                child: const Icon(Icons.close, color: Colors.white, size: 14),
+                              ),
+                            ),
+                          ),
+                        ],
                       ),
-                    ],
+                    ),
                   ),
                 ),
               ),
-            ),
-
           // Draggable Tag Friend Sticker Overlay (Facebook Style)
           if (_taggedFriend != null)
             Positioned(
