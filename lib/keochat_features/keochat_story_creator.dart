@@ -775,7 +775,7 @@ class _KeoStoryCreatorScreenState extends State<KeoStoryCreatorScreen> {
                                 ? const EdgeInsets.symmetric(horizontal: 14, vertical: 8)
                                 : const EdgeInsets.symmetric(horizontal: 6, vertical: 4),
                             decoration: BoxDecoration(
-                              color: _textBackground ? Colors.black.withOpacity(0.65) : Colors.transparent,
+                              color: _textBackground ? Colors.black.withValues(alpha: 0.65) : Colors.transparent,
                               borderRadius: BorderRadius.circular(10),
                               border: _textBackground ? Border.all(color: Colors.white24) : null,
                             ),
@@ -807,7 +807,7 @@ class _KeoStoryCreatorScreenState extends State<KeoStoryCreatorScreen> {
                                   width: 32,
                                   height: 32,
                                   decoration: BoxDecoration(
-                                    color: Colors.black.withOpacity(0.85),
+                                    color: Colors.black.withValues(alpha: 0.85),
                                     shape: BoxShape.circle,
                                     border: Border.all(color: Colors.white, width: 1.5),
                                     boxShadow: const [
@@ -891,7 +891,7 @@ class _KeoStoryCreatorScreenState extends State<KeoStoryCreatorScreen> {
                                   width: 32,
                                   height: 32,
                                   decoration: BoxDecoration(
-                                    color: Colors.black.withOpacity(0.85),
+                                    color: Colors.black.withValues(alpha: 0.85),
                                     shape: BoxShape.circle,
                                     border: Border.all(color: Colors.white, width: 1.5),
                                     boxShadow: const [
@@ -944,12 +944,12 @@ class _KeoStoryCreatorScreenState extends State<KeoStoryCreatorScreen> {
                         child: Container(
                           padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
                           decoration: BoxDecoration(
-                            color: Colors.black.withOpacity(0.75),
+                            color: Colors.black.withValues(alpha: 0.75),
                             borderRadius: BorderRadius.circular(20),
                             border: Border.all(color: const Color(0xFF1877F2), width: 1.5),
                             boxShadow: [
                               BoxShadow(
-                                color: Colors.black.withOpacity(0.3),
+                                color: Colors.black.withValues(alpha: 0.3),
                                 blurRadius: 8,
                                 offset: const Offset(0, 2),
                               ),
@@ -988,7 +988,7 @@ class _KeoStoryCreatorScreenState extends State<KeoStoryCreatorScreen> {
                                 width: 28,
                                 height: 28,
                                 decoration: BoxDecoration(
-                                  color: Colors.black.withOpacity(0.85),
+                                  color: Colors.black.withValues(alpha: 0.85),
                                   shape: BoxShape.circle,
                                   border: Border.all(color: Colors.white, width: 1.5),
                                 ),

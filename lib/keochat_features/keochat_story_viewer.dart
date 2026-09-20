@@ -313,7 +313,7 @@ class _KeoStoryViewerScreenState extends State<KeoStoryViewerScreen> {
               ),
               Positioned.fill(
                 child: Container(
-                  color: Colors.black.withOpacity(0.4),
+                  color: Colors.black.withValues(alpha: 0.4),
                 ),
               ),
               Positioned.fill(
@@ -365,7 +365,7 @@ class _KeoStoryViewerScreenState extends State<KeoStoryViewerScreen> {
                             const SizedBox(height: 12),
                             Text(
                               'KeoChat Story',
-                              style: TextStyle(color: Colors.white.withOpacity(0.9), fontSize: 24, fontWeight: FontWeight.bold),
+                              style: TextStyle(color: Colors.white.withValues(alpha: 0.9), fontSize: 24, fontWeight: FontWeight.bold),
                             ),
                           ],
                         ),
@@ -405,7 +405,7 @@ class _KeoStoryViewerScreenState extends State<KeoStoryViewerScreen> {
                               fontSize: 24,
                               fontWeight: FontWeight.bold,
                               shadows: [
-                                Shadow(color: textColor.withOpacity(0.9), blurRadius: 16),
+                                Shadow(color: textColor.withValues(alpha: 0.9), blurRadius: 16),
                                 const Shadow(color: Colors.white, blurRadius: 8),
                               ],
                             );
@@ -428,7 +428,7 @@ class _KeoStoryViewerScreenState extends State<KeoStoryViewerScreen> {
                               ? const EdgeInsets.symmetric(horizontal: 14, vertical: 8)
                               : EdgeInsets.zero,
                           decoration: BoxDecoration(
-                            color: currentStory.textHasBackground ? Colors.black.withOpacity(0.65) : Colors.transparent,
+                            color: currentStory.textHasBackground ? Colors.black.withValues(alpha: 0.65) : Colors.transparent,
                             borderRadius: BorderRadius.circular(10),
                           ),
                           child: Text(
