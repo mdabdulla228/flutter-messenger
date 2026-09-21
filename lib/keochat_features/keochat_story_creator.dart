@@ -757,13 +757,15 @@ class _KeoStoryCreatorScreenState extends State<KeoStoryCreatorScreen> {
                   setState(() {
                     _textX += details.focalPointDelta.dx;
                     _textY += details.focalPointDelta.dy;
-                    if (details.pointerCount > 1) {
-                      _textScale = (_baseTextScale * details.scale).clamp(0.4, 5.0);
+                    if (details.scale != 1.0) {
+                      _textScale = (_baseTextScale * details.scale).clamp(0.3, 5.0);
+                    }
+                    if (details.rotation != 0.0) {
                       _textRotation = _baseTextRotation + details.rotation;
                     }
                     final screenWidth = MediaQuery.of(context).size.width;
-                    final isNearTopCenter = details.focalPoint.dy < 160 &&
-                        (details.focalPoint.dx - screenWidth / 2).abs() < 100;
+                    final isNearTopCenter = details.focalPoint.dy < 180 &&
+                        (details.focalPoint.dx - screenWidth / 2).abs() < 90;
                     _isHoveringTrash = isNearTopCenter;
                   });
                 },
@@ -827,13 +829,15 @@ class _KeoStoryCreatorScreenState extends State<KeoStoryCreatorScreen> {
                   setState(() {
                     _stickerX += details.focalPointDelta.dx;
                     _stickerY += details.focalPointDelta.dy;
-                    if (details.pointerCount > 1) {
-                      _stickerScale = (_baseStickerScale * details.scale).clamp(0.4, 5.0);
+                    if (details.scale != 1.0) {
+                      _stickerScale = (_baseStickerScale * details.scale).clamp(0.3, 5.0);
+                    }
+                    if (details.rotation != 0.0) {
                       _stickerRotation = _baseStickerRotation + details.rotation;
                     }
                     final screenWidth = MediaQuery.of(context).size.width;
-                    final isNearTopCenter = details.focalPoint.dy < 160 &&
-                        (details.focalPoint.dx - screenWidth / 2).abs() < 100;
+                    final isNearTopCenter = details.focalPoint.dy < 180 &&
+                        (details.focalPoint.dx - screenWidth / 2).abs() < 90;
                     _isHoveringTrash = isNearTopCenter;
                   });
                 },
@@ -1147,6 +1151,40 @@ class _KeoStoryCreatorScreenState extends State<KeoStoryCreatorScreen> {
             ),
           ),
 
+          // Facebook Style Top Delete Trash Can (Appears on top of screen during drag)
+          if (_isDraggingTrash)
+            Positioned(
+              top: MediaQuery.of(context).padding.top + 16,
+              left: 0,
+              right: 0,
+              child: Center(
+                child: AnimatedContainer(
+                  duration: const Duration(milliseconds: 150),
+                  padding: EdgeInsets.all(_isHoveringTrash ? 18 : 14),
+                  decoration: BoxDecoration(
+                    color: _isHoveringTrash ? const Color(0xFFE53935) : Colors.black.withValues(alpha: 0.75),
+                    shape: BoxShape.circle,
+                    border: Border.all(
+                      color: Colors.white,
+                      width: _isHoveringTrash ? 2.5 : 1.5,
+                    ),
+                    boxShadow: [
+                      BoxShadow(
+                        color: _isHoveringTrash ? Colors.redAccent.withValues(alpha: 0.8) : Colors.black45,
+                        blurRadius: _isHoveringTrash ? 22 : 10,
+                        spreadRadius: _isHoveringTrash ? 4 : 1,
+                      ),
+                    ],
+                  ),
+                  child: Icon(
+                    _isHoveringTrash ? Icons.delete_forever_rounded : Icons.delete_outline_rounded,
+                    color: Colors.white,
+                    size: _isHoveringTrash ? 34 : 28,
+                  ),
+                ),
+              ),
+            ),
+
           // Bottom Bar: Facebook Style Share Now Button
           Positioned(
             bottom: MediaQuery.of(context).padding.bottom + 20,
@@ -1191,40 +1229,6 @@ class _KeoStoryCreatorScreenState extends State<KeoStoryCreatorScreen> {
               ]),
             ),
   
-          // Facebook Style Top Delete Trash Can (Appears during Dragging)
-          if (_isDraggingTrash)
-            Positioned(
-              top: MediaQuery.of(context).padding.top + 12,
-              left: 0,
-              right: 0,
-              child: Center(
-                child: AnimatedContainer(
-                  duration: const Duration(milliseconds: 180),
-                  padding: EdgeInsets.all(_isHoveringTrash ? 18 : 14),
-                  decoration: BoxDecoration(
-                    color: _isHoveringTrash ? Colors.redAccent.withValues(alpha: 0.95) : Colors.black.withValues(alpha: 0.75),
-                    shape: BoxShape.circle,
-                    border: Border.all(
-                      color: _isHoveringTrash ? Colors.white : Colors.white70,
-                      width: _isHoveringTrash ? 3 : 1.5,
-                    ),
-                    boxShadow: [
-                      BoxShadow(
-                        color: _isHoveringTrash ? Colors.red.withValues(alpha: 0.6) : Colors.black54,
-                        blurRadius: _isHoveringTrash ? 20 : 10,
-                        spreadRadius: _isHoveringTrash ? 4 : 1,
-                      ),
-                    ],
-                  ),
-                  child: AnimatedSwitcher(
-                    duration: const Duration(milliseconds: 180),
-                    child: _isHoveringTrash
-                        ? const Icon(Icons.delete_forever_rounded, color: Colors.white, size: 36, key: ValueKey('open_bin'))
-                        : const Icon(Icons.delete_outline_rounded, color: Colors.white, size: 28, key: ValueKey('closed_bin')),
-                  ),
-                ),
-              ),
-            ),
         ],
         ),
       ),
