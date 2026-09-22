@@ -747,15 +747,14 @@ class _KeoStoryCreatorScreenState extends State<KeoStoryCreatorScreen> {
             ),
           ),
 
-          // TikTok Style Text Overlay with Border, Smooth Gestures & Floating Delete Button
+          // TikTok Style Text Overlay with Sharp Border, All-Area Touch & Fixed Tooltip
           if (_overlayText != null)
             Positioned(
               top: _textY,
               left: _textX,
               child: GestureDetector(
-                onTap: () {
-                  setState(() => _activeItem = 'text');
-                },
+                behavior: HitTestBehavior.opaque,
+                onTap: () => setState(() => _activeItem = 'text'),
                 onDoubleTap: _addTextDialog,
                 onScaleStart: (details) {
                   _baseTextScale = _textScale;
@@ -783,14 +782,13 @@ class _KeoStoryCreatorScreenState extends State<KeoStoryCreatorScreen> {
                       alignment: Alignment.center,
                       children: [
                         Container(
-                          padding: _textBackground
-                              ? const EdgeInsets.symmetric(horizontal: 14, vertical: 8)
-                              : const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                          color: _textBackground ? Colors.black.withValues(alpha: 0.65) : Colors.transparent,
+                          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
                           decoration: BoxDecoration(
                             color: _textBackground ? Colors.black.withValues(alpha: 0.65) : Colors.transparent,
-                            borderRadius: BorderRadius.circular(10),
+                            borderRadius: _activeItem == 'text' ? BorderRadius.zero : BorderRadius.circular(8),
                             border: _activeItem == 'text'
-                                ? Border.all(color: Colors.white, width: 2.0)
+                                ? Border.all(color: Colors.white, width: 1.5)
                                 : (_textBackground ? Border.all(color: Colors.white24) : null),
                           ),
                           child: Text(
@@ -803,44 +801,17 @@ class _KeoStoryCreatorScreenState extends State<KeoStoryCreatorScreen> {
                             ),
                           ),
                         ),
-                        // TikTok Floating Delete Pill above text
                         if (_activeItem == 'text')
                           Positioned(
-                            top: -38,
-                            child: GestureDetector(
-                              onTap: () {
+                            top: -42,
+                            child: TikTokDeleteTooltip(
+                              currentScale: _textScale,
+                              onDelete: () {
                                 setState(() {
                                   _overlayText = null;
                                   _activeItem = null;
                                 });
                               },
-                              child: Container(
-                                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
-                                decoration: BoxDecoration(
-                                  color: const Color(0xE6262626),
-                                  borderRadius: BorderRadius.circular(20),
-                                  border: Border.all(color: Colors.white30, width: 1),
-                                  boxShadow: const [
-                                    BoxShadow(color: Colors.black54, blurRadius: 6, offset: Offset(0, 2)),
-                                  ],
-                                ),
-                                child: const Row(
-                                  mainAxisSize: MainAxisSize.min,
-                                  children: [
-                                    Icon(Icons.delete_outline_rounded, color: Colors.white, size: 16),
-                                    SizedBox(width: 4),
-                                    Text(
-                                      'Delete',
-                                      style: TextStyle(
-                                        color: Colors.white,
-                                        fontSize: 13,
-                                        fontWeight: FontWeight.bold,
-                                        letterSpacing: 0.3,
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              ),
                             ),
                           ),
                       ],
@@ -850,16 +821,14 @@ class _KeoStoryCreatorScreenState extends State<KeoStoryCreatorScreen> {
               ),
             ),
 
-          // Draggable & Resizable Sticker overlay (Smooth Pinch, Rotate & Drag)
-          // TikTok Style Sticker Overlay with Border, Smooth Gestures & Floating Delete Button
+          // TikTok Style Sticker Overlay with Sharp Border, All-Area Touch & Fixed Tooltip
           if (_selectedSticker != null)
             Positioned(
               top: _stickerY,
               left: _stickerX,
               child: GestureDetector(
-                onTap: () {
-                  setState(() => _activeItem = 'sticker');
-                },
+                behavior: HitTestBehavior.opaque,
+                onTap: () => setState(() => _activeItem = 'sticker'),
                 onScaleStart: (details) {
                   _baseStickerScale = _stickerScale;
                   _baseStickerRotation = _stickerRotation;
@@ -886,10 +855,13 @@ class _KeoStoryCreatorScreenState extends State<KeoStoryCreatorScreen> {
                       alignment: Alignment.center,
                       children: [
                         Container(
-                          padding: const EdgeInsets.all(12),
+                          width: 120,
+                          height: 120,
+                          color: Colors.transparent,
+                          alignment: Alignment.center,
                           decoration: BoxDecoration(
                             border: _activeItem == 'sticker'
-                                ? Border.all(color: Colors.white, width: 2.0)
+                                ? Border.all(color: Colors.white, width: 1.5)
                                 : null,
                           ),
                           child: Text(
@@ -902,44 +874,17 @@ class _KeoStoryCreatorScreenState extends State<KeoStoryCreatorScreen> {
                             ),
                           ),
                         ),
-                        // TikTok Floating Delete Pill above sticker
                         if (_activeItem == 'sticker')
                           Positioned(
-                            top: -38,
-                            child: GestureDetector(
-                              onTap: () {
+                            top: -42,
+                            child: TikTokDeleteTooltip(
+                              currentScale: _stickerScale,
+                              onDelete: () {
                                 setState(() {
                                   _selectedSticker = null;
                                   _activeItem = null;
                                 });
                               },
-                              child: Container(
-                                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
-                                decoration: BoxDecoration(
-                                  color: const Color(0xE6262626),
-                                  borderRadius: BorderRadius.circular(20),
-                                  border: Border.all(color: Colors.white30, width: 1),
-                                  boxShadow: const [
-                                    BoxShadow(color: Colors.black54, blurRadius: 6, offset: Offset(0, 2)),
-                                  ],
-                                ),
-                                child: const Row(
-                                  mainAxisSize: MainAxisSize.min,
-                                  children: [
-                                    Icon(Icons.delete_outline_rounded, color: Colors.white, size: 16),
-                                    SizedBox(width: 4),
-                                    Text(
-                                      'Delete',
-                                      style: TextStyle(
-                                        color: Colors.white,
-                                        fontSize: 13,
-                                        fontWeight: FontWeight.bold,
-                                        letterSpacing: 0.3,
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              ),
                             ),
                           ),
                       ],
@@ -1277,6 +1222,84 @@ class _KeoStoryCreatorScreenState extends State<KeoStoryCreatorScreen> {
   }
 }
 
+
+// TikTok Style Speech-Bubble Delete Tooltip (Fixed UI scale regardless of sticker/text zoom)
+class TikTokDeleteTooltip extends StatelessWidget {
+  final VoidCallback onDelete;
+  final double currentScale;
+
+  const TikTokDeleteTooltip({super.key, required this.onDelete, required this.currentScale});
+
+  @override
+  Widget build(BuildContext context) {
+    final counterScale = currentScale > 0 ? (1.0 / currentScale) : 1.0;
+
+    return Transform.scale(
+      scale: counterScale,
+      alignment: Alignment.bottomCenter,
+      child: GestureDetector(
+        onTap: onDelete,
+        behavior: HitTestBehavior.opaque,
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+              decoration: BoxDecoration(
+                color: const Color(0xEE333333),
+                borderRadius: BorderRadius.circular(8),
+                boxShadow: const [
+                  BoxShadow(color: Colors.black54, blurRadius: 6, offset: Offset(0, 2)),
+                ],
+              ),
+              child: const Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(Icons.delete_outline_rounded, color: Colors.white, size: 16),
+                  SizedBox(width: 4),
+                  Text(
+                    'Delete',
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 13,
+                      fontWeight: FontWeight.w600,
+                      letterSpacing: 0.2,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            CustomPaint(
+              size: const Size(10, 5),
+              painter: _TrianglePainter(const Color(0xEE333333)),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _TrianglePainter extends CustomPainter {
+  final Color color;
+  _TrianglePainter(this.color);
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final paint = Paint()
+      ..color = color
+      ..style = PaintingStyle.fill;
+    final path = Path()
+      ..moveTo(0, 0)
+      ..lineTo(size.width / 2, size.height)
+      ..lineTo(size.width, 0)
+      ..close();
+    canvas.drawPath(path, paint);
+  }
+
+  @override
+  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
+}
 
 class DoodlePoint {
   final Offset point;
