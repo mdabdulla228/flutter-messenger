@@ -21,6 +21,7 @@ class KeoStoryItem {
   final double textRotation;
   final double stickerRotation;
   final String? sticker;
+  final String? stickersJson;
   final double stickerX;
   final double stickerY;
   final double stickerScale;
@@ -54,6 +55,7 @@ class KeoStoryItem {
     this.textRotation = 0.0,
     this.stickerRotation = 0.0,
     this.sticker,
+    this.stickersJson,
     this.stickerX = 120.0,
     this.stickerY = 200.0,
     this.stickerScale = 1.0,
@@ -89,6 +91,7 @@ class KeoStoryItem {
     'textScale': textScale,
     'textRotation': textRotation,
     'sticker': sticker,
+    'stickersJson': stickersJson,
     'stickerX': stickerX,
     'stickerY': stickerY,
     'stickerScale': stickerScale,
@@ -124,6 +127,7 @@ class KeoStoryItem {
       textScale: (json['textScale'] as num?)?.toDouble() ?? 1.0,
       textRotation: (json['textRotation'] as num?)?.toDouble() ?? 0.0,
       sticker: json['sticker'],
+      stickersJson: json['stickersJson'],
       stickerX: (json['stickerX'] as num?)?.toDouble() ?? 140.0,
       stickerY: (json['stickerY'] as num?)?.toDouble() ?? 260.0,
       stickerScale: (json['stickerScale'] as num?)?.toDouble() ?? 1.0,

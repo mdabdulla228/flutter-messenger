@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'dart:ui';
 import 'dart:io';
 import 'package:flutter/material.dart';
@@ -13,6 +14,40 @@ class KeoMusicItem {
   final String? url;
   final String? artwork;
   KeoMusicItem({required this.title, required this.artist, required this.category, this.url, this.artwork});
+}
+
+
+class StoryStickerItem {
+  final String id;
+  String sticker;
+  double x;
+  double y;
+  double scale;
+  double rotation;
+  double baseScale;
+  double baseRotation;
+  int lastPointerCount;
+
+  StoryStickerItem({
+    required this.id,
+    required this.sticker,
+    this.x = 140.0,
+    this.y = 200.0,
+    this.scale = 1.0,
+    this.rotation = 0.0,
+    this.baseScale = 1.0,
+    this.baseRotation = 0.0,
+    this.lastPointerCount = 0,
+  });
+
+  Map<String, dynamic> toJson() => {
+    'id': id,
+    'sticker': sticker,
+    'x': x,
+    'y': y,
+    'scale': scale,
+    'rotation': rotation,
+  };
 }
 
 class KeoStoryCreatorScreen extends StatefulWidget {
@@ -36,12 +71,13 @@ class _KeoStoryCreatorScreenState extends State<KeoStoryCreatorScreen> {
   String? _overlayText;
   String? _selectedFilter;
   String? _selectedSticker;
-  double _stickerX = 140.0;
-  double _stickerY = 180.0;
-  double _stickerScale = 1.0;
-  double _stickerRotation = 0.0;
-  double _baseStickerScale = 1.0;
-  double _baseStickerRotation = 0.0;
+  final double _stickerX = 140.0;
+  final double _stickerY = 180.0;
+  final double _stickerScale = 1.0;
+  final double _stickerRotation = 0.0;
+  final List<StoryStickerItem> _stickers = [];
+  String? _activeStickerId;
+  int _lastTextPointerCount = 0;
   String? _activeItem; // TikTok style active selected item ('text', 'sticker', null)
 
   double _textX = 60.0;
@@ -344,18 +380,21 @@ class _KeoStoryCreatorScreenState extends State<KeoStoryCreatorScreen> {
                   final st = stickers[idx];
                   return InkWell(
                     borderRadius: BorderRadius.circular(12),
-                    onTap: () {
-                      setState(() {
-                        _selectedSticker = st;
-                        _stickerX = 140.0;
-                        _stickerY = 220.0;
-                        _stickerScale = 1.0;
-                        _stickerRotation = 0.0;
-                        _baseStickerScale = 1.0;
-                        _baseStickerRotation = 0.0;
-                      });
-                      Navigator.pop(ctx);
-                    },
+                      onTap: () {
+                        final newSticker = StoryStickerItem(
+                          id: 'st_${DateTime.now().millisecondsSinceEpoch}_${_stickers.length}',
+                          sticker: st,
+                          x: 100.0 + (_stickers.length * 20.0) % 100,
+                          y: 180.0 + (_stickers.length * 25.0) % 120,
+                        );
+                        setState(() {
+                          _stickers.add(newSticker);
+                          _selectedSticker = st;
+                          _activeItem = 'sticker';
+                          _activeStickerId = newSticker.id;
+                        });
+                        Navigator.pop(ctx);
+                      },
                     child: Center(child: Text(st, style: const TextStyle(fontSize: 34))),
                   );
                 },
@@ -666,11 +705,12 @@ class _KeoStoryCreatorScreenState extends State<KeoStoryCreatorScreen> {
       textY: _textY,
       textScale: _textScale,
       textRotation: _textRotation,
-      sticker: _selectedSticker,
-      stickerX: _stickerX,
-      stickerY: _stickerY,
-      stickerScale: _stickerScale,
-      stickerRotation: _stickerRotation,
+      sticker: _stickers.isNotEmpty ? _stickers.first.sticker : _selectedSticker,
+      stickersJson: _stickers.isNotEmpty ? jsonEncode(_stickers.map((s) => s.toJson()).toList()) : null,
+      stickerX: _stickers.isNotEmpty ? _stickers.first.x : _stickerX,
+      stickerY: _stickers.isNotEmpty ? _stickers.first.y : _stickerY,
+      stickerScale: _stickers.isNotEmpty ? _stickers.first.scale : _stickerScale,
+      stickerRotation: _stickers.isNotEmpty ? _stickers.first.rotation : _stickerRotation,
       filter: _selectedFilter,
       durationSeconds: _selectedDurationSeconds,
       createdAt: DateTime.now(),
@@ -727,8 +767,11 @@ class _KeoStoryCreatorScreenState extends State<KeoStoryCreatorScreen> {
             child: GestureDetector(
               behavior: HitTestBehavior.opaque,
               onTap: () {
-                if (_activeItem != null) {
-                  setState(() => _activeItem = null);
+                if (_activeItem != null || _activeStickerId != null) {
+                  setState(() {
+                    _activeItem = null;
+                    _activeStickerId = null;
+                  });
                 }
               },
               child: const SizedBox.expand(),
@@ -759,28 +802,51 @@ class _KeoStoryCreatorScreenState extends State<KeoStoryCreatorScreen> {
                 onScaleStart: (details) {
                   _baseTextScale = _textScale;
                   _baseTextRotation = _textRotation;
+                  _lastTextPointerCount = details.pointerCount;
                   setState(() => _activeItem = 'text');
                 },
                 onScaleUpdate: (details) {
                   setState(() {
+                    if (_lastTextPointerCount < 2 && details.pointerCount >= 2) {
+                      _baseTextScale = _textScale;
+                      _baseTextRotation = _textRotation;
+                    }
+                    _lastTextPointerCount = details.pointerCount;
+
                     _textX += details.focalPointDelta.dx;
                     _textY += details.focalPointDelta.dy;
-                    _textScale = (_baseTextScale * details.scale).clamp(0.4, 4.5);
-                    _textRotation = _baseTextRotation + details.rotation;
+
+                    if (details.pointerCount >= 2) {
+                      _textScale = (_baseTextScale * details.scale).clamp(0.4, 4.5);
+                      _textRotation = _baseTextRotation + details.rotation;
+                    }
                   });
                 },
                 onScaleEnd: (details) {
                   _baseTextScale = _textScale;
                   _baseTextRotation = _textRotation;
+                  _lastTextPointerCount = 0;
                 },
                 child: Transform.rotate(
                   angle: _textRotation,
                   child: Transform.scale(
                     scale: _textScale,
-                    child: Stack(
-                      clipBehavior: Clip.none,
-                      alignment: Alignment.center,
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
                       children: [
+                        if (_activeItem == 'text')
+                          Padding(
+                            padding: const EdgeInsets.only(bottom: 6),
+                            child: TikTokDeleteTooltip(
+                              currentScale: _textScale,
+                              onDelete: () {
+                                setState(() {
+                                  _overlayText = null;
+                                  _activeItem = null;
+                                });
+                              },
+                            ),
+                          ),
                         Container(
                           color: _textBackground ? Colors.black.withValues(alpha: 0.65) : Colors.transparent,
                           padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
@@ -788,7 +854,7 @@ class _KeoStoryCreatorScreenState extends State<KeoStoryCreatorScreen> {
                             color: _textBackground ? Colors.black.withValues(alpha: 0.65) : Colors.transparent,
                             borderRadius: _activeItem == 'text' ? BorderRadius.zero : BorderRadius.circular(8),
                             border: _activeItem == 'text'
-                                ? Border.all(color: Colors.white, width: 1.5)
+                                ? Border.all(color: Colors.white, width: (1.5 / _textScale).clamp(0.3, 3.0))
                                 : (_textBackground ? Border.all(color: Colors.white24) : null),
                           ),
                           child: Text(
@@ -801,19 +867,6 @@ class _KeoStoryCreatorScreenState extends State<KeoStoryCreatorScreen> {
                             ),
                           ),
                         ),
-                        if (_activeItem == 'text')
-                          Positioned(
-                            top: -42,
-                            child: TikTokDeleteTooltip(
-                              currentScale: _textScale,
-                              onDelete: () {
-                                setState(() {
-                                  _overlayText = null;
-                                  _activeItem = null;
-                                });
-                              },
-                            ),
-                          ),
                       ],
                     ),
                   ),
@@ -821,51 +874,83 @@ class _KeoStoryCreatorScreenState extends State<KeoStoryCreatorScreen> {
               ),
             ),
 
-          // TikTok Style Sticker Overlay with Sharp Border, All-Area Touch & Fixed Tooltip
-          if (_selectedSticker != null)
+          // TikTok Style Multi-Sticker Overlay with Sharp Border, All-Area Touch & Fixed Tooltip
+          for (final stItem in _stickers)
             Positioned(
-              top: _stickerY,
-              left: _stickerX,
+              top: stItem.y,
+              left: stItem.x,
               child: GestureDetector(
                 behavior: HitTestBehavior.opaque,
-                onTap: () => setState(() => _activeItem = 'sticker'),
+                onTap: () => setState(() {
+                  _activeItem = 'sticker';
+                  _activeStickerId = stItem.id;
+                }),
                 onScaleStart: (details) {
-                  _baseStickerScale = _stickerScale;
-                  _baseStickerRotation = _stickerRotation;
-                  setState(() => _activeItem = 'sticker');
+                  stItem.baseScale = stItem.scale;
+                  stItem.baseRotation = stItem.rotation;
+                  stItem.lastPointerCount = details.pointerCount;
+                  setState(() {
+                    _activeItem = 'sticker';
+                    _activeStickerId = stItem.id;
+                  });
                 },
                 onScaleUpdate: (details) {
                   setState(() {
-                    _stickerX += details.focalPointDelta.dx;
-                    _stickerY += details.focalPointDelta.dy;
-                    _stickerScale = (_baseStickerScale * details.scale).clamp(0.4, 4.5);
-                    _stickerRotation = _baseStickerRotation + details.rotation;
+                    if (stItem.lastPointerCount < 2 && details.pointerCount >= 2) {
+                      stItem.baseScale = stItem.scale;
+                      stItem.baseRotation = stItem.rotation;
+                    }
+                    stItem.lastPointerCount = details.pointerCount;
+
+                    stItem.x += details.focalPointDelta.dx;
+                    stItem.y += details.focalPointDelta.dy;
+
+                    if (details.pointerCount >= 2) {
+                      stItem.scale = (stItem.baseScale * details.scale).clamp(0.4, 4.5);
+                      stItem.rotation = stItem.baseRotation + details.rotation;
+                    }
                   });
                 },
                 onScaleEnd: (details) {
-                  _baseStickerScale = _stickerScale;
-                  _baseStickerRotation = _stickerRotation;
+                  stItem.baseScale = stItem.scale;
+                  stItem.baseRotation = stItem.rotation;
+                  stItem.lastPointerCount = 0;
                 },
                 child: Transform.rotate(
-                  angle: _stickerRotation,
+                  angle: stItem.rotation,
                   child: Transform.scale(
-                    scale: _stickerScale,
-                    child: Stack(
-                      clipBehavior: Clip.none,
-                      alignment: Alignment.center,
+                    scale: stItem.scale,
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
                       children: [
+                        if (_activeItem == 'sticker' && _activeStickerId == stItem.id)
+                          Padding(
+                            padding: const EdgeInsets.only(bottom: 6),
+                            child: TikTokDeleteTooltip(
+                              currentScale: stItem.scale,
+                              onDelete: () {
+                                setState(() {
+                                  _stickers.removeWhere((s) => s.id == stItem.id);
+                                  if (_activeStickerId == stItem.id) {
+                                    _activeStickerId = null;
+                                    _activeItem = null;
+                                  }
+                                });
+                              },
+                            ),
+                          ),
                         Container(
                           width: 120,
                           height: 120,
                           color: Colors.transparent,
                           alignment: Alignment.center,
                           decoration: BoxDecoration(
-                            border: _activeItem == 'sticker'
-                                ? Border.all(color: Colors.white, width: 1.5)
+                            border: (_activeItem == 'sticker' && _activeStickerId == stItem.id)
+                                ? Border.all(color: Colors.white, width: (1.5 / stItem.scale).clamp(0.3, 3.0))
                                 : null,
                           ),
                           child: Text(
-                            _selectedSticker ?? '',
+                            stItem.sticker,
                             style: const TextStyle(
                               fontSize: 60,
                               shadows: [
@@ -874,19 +959,6 @@ class _KeoStoryCreatorScreenState extends State<KeoStoryCreatorScreen> {
                             ),
                           ),
                         ),
-                        if (_activeItem == 'sticker')
-                          Positioned(
-                            top: -42,
-                            child: TikTokDeleteTooltip(
-                              currentScale: _stickerScale,
-                              onDelete: () {
-                                setState(() {
-                                  _selectedSticker = null;
-                                  _activeItem = null;
-                                });
-                              },
-                            ),
-                          ),
                       ],
                     ),
                   ),

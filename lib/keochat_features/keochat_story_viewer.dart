@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'keochat_room_screen.dart';
 import 'dart:async';
 import 'dart:io';
@@ -447,27 +448,61 @@ class _KeoStoryViewerScreenState extends State<KeoStoryViewerScreen> {
                 ),
               ),
 
-            // Sticker overlay only if present
-            if (currentStory.sticker != null && currentStory.sticker!.isNotEmpty)
-              Positioned(
-                top: currentStory.stickerY,
-                left: currentStory.stickerX,
-                child: Transform.rotate(
-                  angle: currentStory.stickerRotation,
-                  child: Transform.scale(
-                    scale: currentStory.stickerScale,
-                    child: Text(
-                      currentStory.sticker!,
-                      style: const TextStyle(
-                        fontSize: 60,
-                        shadows: [
-                          Shadow(color: Colors.black45, blurRadius: 10, offset: Offset(0, 3)),
-                        ],
+              // Sticker overlay (supports multiple and single)
+              if (currentStory.stickersJson != null && currentStory.stickersJson!.isNotEmpty)
+                ...(() {
+                  try {
+                    final list = jsonDecode(currentStory.stickersJson!) as List;
+                    return list.map((st) {
+                      final double x = (st["x"] as num?)?.toDouble() ?? 140.0;
+                      final double y = (st["y"] as num?)?.toDouble() ?? 200.0;
+                      final double rot = (st["rotation"] as num?)?.toDouble() ?? 0.0;
+                      final double sc = (st["scale"] as num?)?.toDouble() ?? 1.0;
+                      final String em = (st["sticker"] as String?) ?? "";
+                      return Positioned(
+                        top: y,
+                        left: x,
+                        child: Transform.rotate(
+                          angle: rot,
+                          child: Transform.scale(
+                            scale: sc,
+                            child: Text(
+                              em,
+                              style: const TextStyle(
+                                fontSize: 60,
+                                shadows: [
+                                  Shadow(color: Colors.black45, blurRadius: 10, offset: Offset(0, 3)),
+                                ],
+                              ),
+                            ),
+                          ),
+                        ),
+                      );
+                    }).toList();
+                  } catch (_) {
+                    return <Widget>[];
+                  }
+                })()
+              else if (currentStory.sticker != null && currentStory.sticker!.isNotEmpty)
+                Positioned(
+                  top: currentStory.stickerY,
+                  left: currentStory.stickerX,
+                  child: Transform.rotate(
+                    angle: currentStory.stickerRotation,
+                    child: Transform.scale(
+                      scale: currentStory.stickerScale,
+                      child: Text(
+                        currentStory.sticker!,
+                        style: const TextStyle(
+                          fontSize: 60,
+                          shadows: [
+                            Shadow(color: Colors.black45, blurRadius: 10, offset: Offset(0, 3)),
+                          ],
+                        ),
                       ),
                     ),
                   ),
                 ),
-              ),
             // 2. Floating Reactions
             ..._floatingReactions.map((reaction) => _buildFloatingReactionWidget(reaction)),
 
