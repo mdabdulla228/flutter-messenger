@@ -42,9 +42,7 @@ class _KeoStoryCreatorScreenState extends State<KeoStoryCreatorScreen> {
   double _stickerRotation = 0.0;
   double _baseStickerScale = 1.0;
   double _baseStickerRotation = 0.0;
-  bool _isDraggingTrash = false;
-  bool _isHoveringTrash = false;
-  String _draggingItemType = "";
+  String? _activeItem; // TikTok style active selected item ('text', 'sticker', null)
 
   double _textX = 60.0;
   double _textY = 280.0;
@@ -724,6 +722,18 @@ class _KeoStoryCreatorScreenState extends State<KeoStoryCreatorScreen> {
               child: const SizedBox.expand(),
             ),
           ),
+          // Tap anywhere on background to deselect item (removes border and delete button)
+          Positioned.fill(
+            child: GestureDetector(
+              behavior: HitTestBehavior.opaque,
+              onTap: () {
+                if (_activeItem != null) {
+                  setState(() => _activeItem = null);
+                }
+              },
+              child: const SizedBox.expand(),
+            ),
+          ),
           // Center Main Media with Selected Filter
           Positioned.fill(
             child: Center(
@@ -737,72 +747,103 @@ class _KeoStoryCreatorScreenState extends State<KeoStoryCreatorScreen> {
             ),
           ),
 
-          // Draggable & Resizable Text overlay with Facebook style gesture & No Cross Button
+          // TikTok Style Text Overlay with Border, Smooth Gestures & Floating Delete Button
           if (_overlayText != null)
             Positioned(
               top: _textY,
               left: _textX,
               child: GestureDetector(
+                onTap: () {
+                  setState(() => _activeItem = 'text');
+                },
                 onDoubleTap: _addTextDialog,
                 onScaleStart: (details) {
                   _baseTextScale = _textScale;
                   _baseTextRotation = _textRotation;
-                  setState(() {
-                    _isDraggingTrash = true;
-                    _draggingItemType = "text";
-                    _isHoveringTrash = false;
-                  });
+                  setState(() => _activeItem = 'text');
                 },
                 onScaleUpdate: (details) {
                   setState(() {
                     _textX += details.focalPointDelta.dx;
                     _textY += details.focalPointDelta.dy;
-                    if (details.scale != 1.0) {
-                      _textScale = (_baseTextScale * details.scale).clamp(0.3, 5.0);
-                    }
-                    if (details.rotation != 0.0) {
-                      _textRotation = _baseTextRotation + details.rotation;
-                    }
-                    final screenWidth = MediaQuery.of(context).size.width;
-                    final isNearTopCenter = details.focalPoint.dy < 180 &&
-                        (details.focalPoint.dx - screenWidth / 2).abs() < 90;
-                    _isHoveringTrash = isNearTopCenter;
+                    _textScale = (_baseTextScale * details.scale).clamp(0.4, 4.5);
+                    _textRotation = _baseTextRotation + details.rotation;
                   });
                 },
                 onScaleEnd: (details) {
-                  setState(() {
-                    if (_isHoveringTrash && _draggingItemType == "text") {
-                      _overlayText = null;
-                    }
-                    _isDraggingTrash = false;
-                    _isHoveringTrash = false;
-                    _draggingItemType = "";
-                    _baseTextScale = _textScale;
-                    _baseTextRotation = _textRotation;
-                  });
+                  _baseTextScale = _textScale;
+                  _baseTextRotation = _textRotation;
                 },
                 child: Transform.rotate(
                   angle: _textRotation,
                   child: Transform.scale(
                     scale: _textScale,
-                    child: Container(
-                      padding: _textBackground
-                          ? const EdgeInsets.symmetric(horizontal: 14, vertical: 8)
-                          : const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
-                      decoration: BoxDecoration(
-                        color: _textBackground ? Colors.black.withValues(alpha: 0.65) : Colors.transparent,
-                        borderRadius: BorderRadius.circular(10),
-                        border: _textBackground ? Border.all(color: Colors.white24) : null,
-                      ),
-                      child: Text(
-                        _overlayText ?? '',
-                        textAlign: TextAlign.center,
-                        style: _getStoryTextStyle(_selectedFontFamily, _selectedTextColor, fontSize: 24).copyWith(
-                          shadows: const [
-                            Shadow(color: Colors.black87, blurRadius: 8, offset: Offset(0, 1)),
-                          ],
+                    child: Stack(
+                      clipBehavior: Clip.none,
+                      alignment: Alignment.center,
+                      children: [
+                        Container(
+                          padding: _textBackground
+                              ? const EdgeInsets.symmetric(horizontal: 14, vertical: 8)
+                              : const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                          decoration: BoxDecoration(
+                            color: _textBackground ? Colors.black.withValues(alpha: 0.65) : Colors.transparent,
+                            borderRadius: BorderRadius.circular(10),
+                            border: _activeItem == 'text'
+                                ? Border.all(color: Colors.white, width: 2.0)
+                                : (_textBackground ? Border.all(color: Colors.white24) : null),
+                          ),
+                          child: Text(
+                            _overlayText ?? '',
+                            textAlign: TextAlign.center,
+                            style: _getStoryTextStyle(_selectedFontFamily, _selectedTextColor, fontSize: 24).copyWith(
+                              shadows: const [
+                                Shadow(color: Colors.black87, blurRadius: 8, offset: Offset(0, 1)),
+                              ],
+                            ),
+                          ),
                         ),
-                      ),
+                        // TikTok Floating Delete Pill above text
+                        if (_activeItem == 'text')
+                          Positioned(
+                            top: -38,
+                            child: GestureDetector(
+                              onTap: () {
+                                setState(() {
+                                  _overlayText = null;
+                                  _activeItem = null;
+                                });
+                              },
+                              child: Container(
+                                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
+                                decoration: BoxDecoration(
+                                  color: const Color(0xE6262626),
+                                  borderRadius: BorderRadius.circular(20),
+                                  border: Border.all(color: Colors.white30, width: 1),
+                                  boxShadow: const [
+                                    BoxShadow(color: Colors.black54, blurRadius: 6, offset: Offset(0, 2)),
+                                  ],
+                                ),
+                                child: const Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    Icon(Icons.delete_outline_rounded, color: Colors.white, size: 16),
+                                    SizedBox(width: 4),
+                                    Text(
+                                      'Delete',
+                                      style: TextStyle(
+                                        color: Colors.white,
+                                        fontSize: 13,
+                                        fontWeight: FontWeight.bold,
+                                        letterSpacing: 0.3,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ),
+                          ),
+                      ],
                     ),
                   ),
                 ),
@@ -810,64 +851,98 @@ class _KeoStoryCreatorScreenState extends State<KeoStoryCreatorScreen> {
             ),
 
           // Draggable & Resizable Sticker overlay (Smooth Pinch, Rotate & Drag)
-          // Draggable, Resizable & Rotatable Sticker overlay with Facebook Style gesture & No Cross Button
+          // TikTok Style Sticker Overlay with Border, Smooth Gestures & Floating Delete Button
           if (_selectedSticker != null)
             Positioned(
               top: _stickerY,
               left: _stickerX,
               child: GestureDetector(
+                onTap: () {
+                  setState(() => _activeItem = 'sticker');
+                },
                 onScaleStart: (details) {
                   _baseStickerScale = _stickerScale;
                   _baseStickerRotation = _stickerRotation;
-                  setState(() {
-                    _isDraggingTrash = true;
-                    _draggingItemType = "sticker";
-                    _isHoveringTrash = false;
-                  });
+                  setState(() => _activeItem = 'sticker');
                 },
                 onScaleUpdate: (details) {
                   setState(() {
                     _stickerX += details.focalPointDelta.dx;
                     _stickerY += details.focalPointDelta.dy;
-                    if (details.scale != 1.0) {
-                      _stickerScale = (_baseStickerScale * details.scale).clamp(0.3, 5.0);
-                    }
-                    if (details.rotation != 0.0) {
-                      _stickerRotation = _baseStickerRotation + details.rotation;
-                    }
-                    final screenWidth = MediaQuery.of(context).size.width;
-                    final isNearTopCenter = details.focalPoint.dy < 180 &&
-                        (details.focalPoint.dx - screenWidth / 2).abs() < 90;
-                    _isHoveringTrash = isNearTopCenter;
+                    _stickerScale = (_baseStickerScale * details.scale).clamp(0.4, 4.5);
+                    _stickerRotation = _baseStickerRotation + details.rotation;
                   });
                 },
                 onScaleEnd: (details) {
-                  setState(() {
-                    if (_isHoveringTrash && _draggingItemType == "sticker") {
-                      _selectedSticker = null;
-                    }
-                    _isDraggingTrash = false;
-                    _isHoveringTrash = false;
-                    _draggingItemType = "";
-                    _baseStickerScale = _stickerScale;
-                    _baseStickerRotation = _stickerRotation;
-                  });
+                  _baseStickerScale = _stickerScale;
+                  _baseStickerRotation = _stickerRotation;
                 },
                 child: Transform.rotate(
                   angle: _stickerRotation,
                   child: Transform.scale(
                     scale: _stickerScale,
-                    child: Padding(
-                      padding: const EdgeInsets.all(8.0),
-                      child: Text(
-                        _selectedSticker ?? "",
-                        style: const TextStyle(
-                          fontSize: 60,
-                          shadows: [
-                            Shadow(color: Colors.black45, blurRadius: 10, offset: Offset(0, 3)),
-                          ],
+                    child: Stack(
+                      clipBehavior: Clip.none,
+                      alignment: Alignment.center,
+                      children: [
+                        Container(
+                          padding: const EdgeInsets.all(12),
+                          decoration: BoxDecoration(
+                            border: _activeItem == 'sticker'
+                                ? Border.all(color: Colors.white, width: 2.0)
+                                : null,
+                          ),
+                          child: Text(
+                            _selectedSticker ?? '',
+                            style: const TextStyle(
+                              fontSize: 60,
+                              shadows: [
+                                Shadow(color: Colors.black45, blurRadius: 10, offset: Offset(0, 3)),
+                              ],
+                            ),
+                          ),
                         ),
-                      ),
+                        // TikTok Floating Delete Pill above sticker
+                        if (_activeItem == 'sticker')
+                          Positioned(
+                            top: -38,
+                            child: GestureDetector(
+                              onTap: () {
+                                setState(() {
+                                  _selectedSticker = null;
+                                  _activeItem = null;
+                                });
+                              },
+                              child: Container(
+                                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
+                                decoration: BoxDecoration(
+                                  color: const Color(0xE6262626),
+                                  borderRadius: BorderRadius.circular(20),
+                                  border: Border.all(color: Colors.white30, width: 1),
+                                  boxShadow: const [
+                                    BoxShadow(color: Colors.black54, blurRadius: 6, offset: Offset(0, 2)),
+                                  ],
+                                ),
+                                child: const Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    Icon(Icons.delete_outline_rounded, color: Colors.white, size: 16),
+                                    SizedBox(width: 4),
+                                    Text(
+                                      'Delete',
+                                      style: TextStyle(
+                                        color: Colors.white,
+                                        fontSize: 13,
+                                        fontWeight: FontWeight.bold,
+                                        letterSpacing: 0.3,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ),
+                          ),
+                      ],
                     ),
                   ),
                 ),
@@ -1150,40 +1225,6 @@ class _KeoStoryCreatorScreenState extends State<KeoStoryCreatorScreen> {
               ],
             ),
           ),
-
-          // Facebook Style Top Delete Trash Can (Appears on top of screen during drag)
-          if (_isDraggingTrash)
-            Positioned(
-              top: MediaQuery.of(context).padding.top + 16,
-              left: 0,
-              right: 0,
-              child: Center(
-                child: AnimatedContainer(
-                  duration: const Duration(milliseconds: 150),
-                  padding: EdgeInsets.all(_isHoveringTrash ? 18 : 14),
-                  decoration: BoxDecoration(
-                    color: _isHoveringTrash ? const Color(0xFFE53935) : Colors.black.withValues(alpha: 0.75),
-                    shape: BoxShape.circle,
-                    border: Border.all(
-                      color: Colors.white,
-                      width: _isHoveringTrash ? 2.5 : 1.5,
-                    ),
-                    boxShadow: [
-                      BoxShadow(
-                        color: _isHoveringTrash ? Colors.redAccent.withValues(alpha: 0.8) : Colors.black45,
-                        blurRadius: _isHoveringTrash ? 22 : 10,
-                        spreadRadius: _isHoveringTrash ? 4 : 1,
-                      ),
-                    ],
-                  ),
-                  child: Icon(
-                    _isHoveringTrash ? Icons.delete_forever_rounded : Icons.delete_outline_rounded,
-                    color: Colors.white,
-                    size: _isHoveringTrash ? 34 : 28,
-                  ),
-                ),
-              ),
-            ),
 
           // Bottom Bar: Facebook Style Share Now Button
           Positioned(
