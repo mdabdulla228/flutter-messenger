@@ -24,8 +24,8 @@ class StoryStickerItem {
   double y;
   double scale;
   double rotation;
-  double baseScale;
-  double baseRotation;
+  double prevScale;
+  double prevRotation;
   int lastPointerCount;
 
   StoryStickerItem({
@@ -35,12 +35,12 @@ class StoryStickerItem {
     this.y = 200.0,
     this.scale = 1.0,
     this.rotation = 0.0,
-    this.baseScale = 1.0,
-    this.baseRotation = 0.0,
+    this.prevScale = 1.0,
+    this.prevRotation = 0.0,
     this.lastPointerCount = 0,
   });
 
-  Map<String, dynamic> toJson() => {
+    Map<String, dynamic> toJson() => {
     'id': id,
     'sticker': sticker,
     'x': x,
@@ -78,14 +78,14 @@ class _KeoStoryCreatorScreenState extends State<KeoStoryCreatorScreen> {
   final List<StoryStickerItem> _stickers = [];
   String? _activeStickerId;
   int _lastTextPointerCount = 0;
+  double _prevTextScale = 1.0;
+  double _prevTextRotation = 0.0;
   String? _activeItem; // TikTok style active selected item ('text', 'sticker', null)
 
   double _textX = 60.0;
   double _textY = 280.0;
   double _textScale = 1.0;
   double _textRotation = 0.0;
-  double _baseTextScale = 1.0;
-  double _baseTextRotation = 0.0;
   Color _selectedTextColor = Colors.white;
   String _selectedFontFamily = 'Classic';
   bool _textBackground = false;
@@ -795,176 +795,193 @@ class _KeoStoryCreatorScreenState extends State<KeoStoryCreatorScreen> {
             Positioned(
               top: _textY,
               left: _textX,
-              child: GestureDetector(
-                behavior: HitTestBehavior.opaque,
-                onTap: () => setState(() => _activeItem = 'text'),
-                onDoubleTap: _addTextDialog,
-                onScaleStart: (details) {
-                  _baseTextScale = _textScale;
-                  _baseTextRotation = _textRotation;
-                  _lastTextPointerCount = details.pointerCount;
-                  setState(() => _activeItem = 'text');
-                },
-                onScaleUpdate: (details) {
-                  setState(() {
-                    if (_lastTextPointerCount < 2 && details.pointerCount >= 2) {
-                      _baseTextScale = _textScale;
-                      _baseTextRotation = _textRotation;
-                    }
-                    _lastTextPointerCount = details.pointerCount;
+              child: Transform.rotate(
+                angle: _textRotation,
+                child: Transform.scale(
+                  scale: _textScale,
+                  child: GestureDetector(
+                    behavior: HitTestBehavior.opaque,
+                    onTap: () => setState(() => _activeItem = 'text'),
+                    onDoubleTap: _addTextDialog,
+                    onScaleStart: (details) {
+                      _prevTextScale = 1.0;
+                      _prevTextRotation = 0.0;
+                      _lastTextPointerCount = details.pointerCount;
+                      setState(() => _activeItem = 'text');
+                    },
+                    onScaleUpdate: (details) {
+                      setState(() {
+                        _textX += details.focalPointDelta.dx;
+                        _textY += details.focalPointDelta.dy;
 
-                    _textX += details.focalPointDelta.dx;
-                    _textY += details.focalPointDelta.dy;
+                        if (details.pointerCount >= 2) {
+                          if (_lastTextPointerCount < 2) {
+                            _prevTextScale = details.scale;
+                            _prevTextRotation = details.rotation;
+                          } else {
+                            final double scaleDelta = _prevTextScale > 0.0001 ? (details.scale / _prevTextScale) : 1.0;
+                            final double rotationDelta = details.rotation - _prevTextRotation;
 
-                    if (details.pointerCount >= 2) {
-                      _textScale = (_baseTextScale * details.scale).clamp(0.4, 4.5);
-                      _textRotation = _baseTextRotation + details.rotation;
-                    }
-                  });
-                },
-                onScaleEnd: (details) {
-                  _baseTextScale = _textScale;
-                  _baseTextRotation = _textRotation;
-                  _lastTextPointerCount = 0;
-                },
-                child: Transform.rotate(
-                  angle: _textRotation,
-                  child: Transform.scale(
-                    scale: _textScale,
-                    child: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        if (_activeItem == 'text')
-                          Padding(
-                            padding: const EdgeInsets.only(bottom: 6),
-                            child: TikTokDeleteTooltip(
-                              currentScale: _textScale,
-                              onDelete: () {
-                                setState(() {
-                                  _overlayText = null;
-                                  _activeItem = null;
-                                });
-                              },
-                            ),
-                          ),
-                        Container(
-                          color: _textBackground ? Colors.black.withValues(alpha: 0.65) : Colors.transparent,
-                          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-                          decoration: BoxDecoration(
-                            color: _textBackground ? Colors.black.withValues(alpha: 0.65) : Colors.transparent,
-                            borderRadius: _activeItem == 'text' ? BorderRadius.zero : BorderRadius.circular(8),
-                            border: _activeItem == 'text'
-                                ? Border.all(color: Colors.white, width: (1.5 / _textScale).clamp(0.3, 3.0))
-                                : (_textBackground ? Border.all(color: Colors.white24) : null),
-                          ),
-                          child: Text(
-                            _overlayText ?? '',
-                            textAlign: TextAlign.center,
-                            style: _getStoryTextStyle(_selectedFontFamily, _selectedTextColor, fontSize: 24).copyWith(
-                              shadows: const [
-                                Shadow(color: Colors.black87, blurRadius: 8, offset: Offset(0, 1)),
-                              ],
-                            ),
-                          ),
+                            _textScale = (_textScale * scaleDelta).clamp(0.4, 4.5);
+                            _textRotation += rotationDelta;
+
+                            _prevTextScale = details.scale;
+                            _prevTextRotation = details.rotation;
+                          }
+                        } else {
+                          _prevTextScale = 1.0;
+                          _prevTextRotation = 0.0;
+                        }
+                        _lastTextPointerCount = details.pointerCount;
+                      });
+                    },
+                    onScaleEnd: (details) {
+                      _prevTextScale = 1.0;
+                      _prevTextRotation = 0.0;
+                      _lastTextPointerCount = 0;
+                    },
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                      decoration: BoxDecoration(
+                        color: _textBackground
+                            ? Colors.black.withValues(alpha: 0.65)
+                            : const Color(0x01000000),
+                        borderRadius: _activeItem == 'text' ? BorderRadius.zero : BorderRadius.circular(8),
+                        border: _activeItem == 'text'
+                            ? Border.all(color: Colors.white, width: (1.5 / _textScale).clamp(0.3, 3.0))
+                            : (_textBackground ? Border.all(color: Colors.white24) : null),
+                      ),
+                      child: Text(
+                        _overlayText ?? '',
+                        textAlign: TextAlign.center,
+                        style: _getStoryTextStyle(_selectedFontFamily, _selectedTextColor, fontSize: 24).copyWith(
+                          shadows: const [
+                            Shadow(color: Colors.black87, blurRadius: 8, offset: Offset(0, 1)),
+                          ],
                         ),
-                      ],
+                      ),
                     ),
                   ),
                 ),
               ),
             ),
 
-          // TikTok Style Multi-Sticker Overlay with Sharp Border, All-Area Touch & Fixed Tooltip
+          // Separate Independent Delete Button for Text (Always clickable at any scale)
+          if (_overlayText != null && _activeItem == 'text')
+            Positioned(
+              top: (_textY - 45).clamp(60.0, MediaQuery.of(context).size.height - 120),
+              left: (_textX + 20).clamp(20.0, MediaQuery.of(context).size.width - 110),
+              child: TikTokDeleteTooltip(
+                currentScale: 1.0,
+                onDelete: () {
+                  setState(() {
+                    _overlayText = null;
+                    _activeItem = null;
+                  });
+                },
+              ),
+            ),
+
+          // TikTok Style Multi-Sticker Overlay with Sharp Border & HitTest
           for (final stItem in _stickers)
             Positioned(
               top: stItem.y,
               left: stItem.x,
-              child: GestureDetector(
-                behavior: HitTestBehavior.opaque,
-                onTap: () => setState(() {
-                  _activeItem = 'sticker';
-                  _activeStickerId = stItem.id;
-                }),
-                onScaleStart: (details) {
-                  stItem.baseScale = stItem.scale;
-                  stItem.baseRotation = stItem.rotation;
-                  stItem.lastPointerCount = details.pointerCount;
-                  setState(() {
-                    _activeItem = 'sticker';
-                    _activeStickerId = stItem.id;
-                  });
-                },
-                onScaleUpdate: (details) {
-                  setState(() {
-                    if (stItem.lastPointerCount < 2 && details.pointerCount >= 2) {
-                      stItem.baseScale = stItem.scale;
-                      stItem.baseRotation = stItem.rotation;
-                    }
-                    stItem.lastPointerCount = details.pointerCount;
+              child: Transform.rotate(
+                angle: stItem.rotation,
+                child: Transform.scale(
+                  scale: stItem.scale,
+                  child: GestureDetector(
+                    behavior: HitTestBehavior.opaque,
+                    onTap: () => setState(() {
+                      _activeItem = 'sticker';
+                      _activeStickerId = stItem.id;
+                    }),
+                    onScaleStart: (details) {
+                      stItem.prevScale = 1.0;
+                      stItem.prevRotation = 0.0;
+                      stItem.lastPointerCount = details.pointerCount;
+                      setState(() {
+                        _activeItem = 'sticker';
+                        _activeStickerId = stItem.id;
+                      });
+                    },
+                    onScaleUpdate: (details) {
+                      setState(() {
+                        stItem.x += details.focalPointDelta.dx;
+                        stItem.y += details.focalPointDelta.dy;
 
-                    stItem.x += details.focalPointDelta.dx;
-                    stItem.y += details.focalPointDelta.dy;
+                        if (details.pointerCount >= 2) {
+                          if (stItem.lastPointerCount < 2) {
+                            stItem.prevScale = details.scale;
+                            stItem.prevRotation = details.rotation;
+                          } else {
+                            final double scaleDelta = stItem.prevScale > 0.0001 ? (details.scale / stItem.prevScale) : 1.0;
+                            final double rotationDelta = details.rotation - stItem.prevRotation;
 
-                    if (details.pointerCount >= 2) {
-                      stItem.scale = (stItem.baseScale * details.scale).clamp(0.4, 4.5);
-                      stItem.rotation = stItem.baseRotation + details.rotation;
-                    }
-                  });
-                },
-                onScaleEnd: (details) {
-                  stItem.baseScale = stItem.scale;
-                  stItem.baseRotation = stItem.rotation;
-                  stItem.lastPointerCount = 0;
-                },
-                child: Transform.rotate(
-                  angle: stItem.rotation,
-                  child: Transform.scale(
-                    scale: stItem.scale,
-                    child: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        if (_activeItem == 'sticker' && _activeStickerId == stItem.id)
-                          Padding(
-                            padding: const EdgeInsets.only(bottom: 6),
-                            child: TikTokDeleteTooltip(
-                              currentScale: stItem.scale,
-                              onDelete: () {
-                                setState(() {
-                                  _stickers.removeWhere((s) => s.id == stItem.id);
-                                  if (_activeStickerId == stItem.id) {
-                                    _activeStickerId = null;
-                                    _activeItem = null;
-                                  }
-                                });
-                              },
-                            ),
-                          ),
-                        Container(
-                          width: 120,
-                          height: 120,
-                          color: Colors.transparent,
-                          alignment: Alignment.center,
-                          decoration: BoxDecoration(
-                            border: (_activeItem == 'sticker' && _activeStickerId == stItem.id)
-                                ? Border.all(color: Colors.white, width: (1.5 / stItem.scale).clamp(0.3, 3.0))
-                                : null,
-                          ),
-                          child: Text(
-                            stItem.sticker,
-                            style: const TextStyle(
-                              fontSize: 60,
-                              shadows: [
-                                Shadow(color: Colors.black45, blurRadius: 10, offset: Offset(0, 3)),
-                              ],
-                            ),
-                          ),
+                            stItem.scale = (stItem.scale * scaleDelta).clamp(0.4, 4.5);
+                            stItem.rotation += rotationDelta;
+
+                            stItem.prevScale = details.scale;
+                            stItem.prevRotation = details.rotation;
+                          }
+                        } else {
+                          stItem.prevScale = 1.0;
+                          stItem.prevRotation = 0.0;
+                        }
+                        stItem.lastPointerCount = details.pointerCount;
+                      });
+                    },
+                    onScaleEnd: (details) {
+                      stItem.prevScale = 1.0;
+                      stItem.prevRotation = 0.0;
+                      stItem.lastPointerCount = 0;
+                    },
+                    child: Container(
+                      width: 120,
+                      height: 120,
+                      alignment: Alignment.center,
+                      decoration: BoxDecoration(
+                        color: const Color(0x01000000),
+                        border: (_activeItem == 'sticker' && _activeStickerId == stItem.id)
+                            ? Border.all(color: Colors.white, width: (1.5 / stItem.scale).clamp(0.3, 3.0))
+                            : null,
+                      ),
+                      child: Text(
+                        stItem.sticker,
+                        style: const TextStyle(
+                          fontSize: 60,
+                          shadows: [
+                            Shadow(color: Colors.black45, blurRadius: 10, offset: Offset(0, 3)),
+                          ],
                         ),
-                      ],
+                      ),
                     ),
                   ),
                 ),
               ),
             ),
+
+          // Separate Independent Delete Button for Active Sticker (Always clickable at any scale)
+          if (_activeItem == 'sticker' && _activeStickerId != null) ...[
+            for (final stItem in _stickers)
+              if (stItem.id == _activeStickerId)
+                Positioned(
+                  top: (stItem.y - (35 * stItem.scale) - 36).clamp(60.0, MediaQuery.of(context).size.height - 120),
+                  left: (stItem.x + 60 - 45).clamp(20.0, MediaQuery.of(context).size.width - 110),
+                  child: TikTokDeleteTooltip(
+                    currentScale: 1.0,
+                    onDelete: () {
+                      setState(() {
+                        _stickers.removeWhere((s) => s.id == stItem.id);
+                        _activeStickerId = null;
+                        _activeItem = null;
+                      });
+                    },
+                  ),
+                ),
+          ],
+
           if (_taggedFriend != null)
             Positioned(
               top: _tagY,
