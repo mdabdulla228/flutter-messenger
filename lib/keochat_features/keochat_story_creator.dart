@@ -70,7 +70,6 @@ class _KeoStoryCreatorScreenState extends State<KeoStoryCreatorScreen> {
   KeoMusicItem? _selectedMusic;
   String? _overlayText;
   String? _selectedFilter;
-  String? _selectedSticker;
   final double _stickerX = 140.0;
   final double _stickerY = 180.0;
   final double _stickerScale = 1.0;
@@ -389,7 +388,7 @@ class _KeoStoryCreatorScreenState extends State<KeoStoryCreatorScreen> {
                         );
                         setState(() {
                           _stickers.add(newSticker);
-                          _selectedSticker = st;
+                          
                           _activeItem = 'sticker';
                           _activeStickerId = newSticker.id;
                         });
@@ -587,6 +586,7 @@ class _KeoStoryCreatorScreenState extends State<KeoStoryCreatorScreen> {
   void _openDurationSelector() {
     showModalBottomSheet(
       context: context,
+      isScrollControlled: true,
       backgroundColor: const Color(0xFF1C1E21),
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
@@ -603,84 +603,94 @@ class _KeoStoryCreatorScreenState extends State<KeoStoryCreatorScreen> {
 
         return SafeArea(
           child: Padding(
-            padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 18),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  children: [
-                    const Icon(Icons.timer, color: Color(0xFF1877F2), size: 24),
-                    const SizedBox(width: 10),
-                    const Text(
-                      'Story Duration',
-                      style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold),
-                    ),
-                    const Spacer(),
-                    IconButton(
-                      icon: const Icon(Icons.close, color: Colors.white70),
-                      onPressed: () => Navigator.pop(ctx),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 8),
-                Text(
-                  'Set how long friends can view this story (Max 1 minute)',
-                  style: TextStyle(color: Colors.white.withValues(alpha: 0.6), fontSize: 13),
-                ),
-                const SizedBox(height: 14),
-                ...options.map((opt) {
-                  final sec = opt['seconds'] as int;
-                  final isSelected = _selectedDurationSeconds == sec;
-                  return InkWell(
-                    onTap: () {
-                      setState(() {
-                        _selectedDurationSeconds = sec;
-                      });
-                      Navigator.pop(ctx);
-                    },
-                    child: Container(
-                      margin: const EdgeInsets.only(bottom: 8),
-                      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-                      decoration: BoxDecoration(
-                        color: isSelected ? const Color(0xFF1877F2).withValues(alpha: 0.2) : Colors.white10,
-                        borderRadius: BorderRadius.circular(12),
-                        border: Border.all(
-                          color: isSelected ? const Color(0xFF1877F2) : Colors.transparent,
-                          width: 1.5,
+            padding: EdgeInsets.only(
+              left: 18,
+              right: 18,
+              top: 16,
+              bottom: MediaQuery.of(ctx).viewInsets.bottom + 20,
+            ),
+            child: SingleChildScrollView(
+              physics: const BouncingScrollPhysics(),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      const Icon(Icons.timer, color: Color(0xFF1877F2), size: 24),
+                      const SizedBox(width: 10),
+                      const Text(
+                        'Story Duration',
+                        style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold),
+                      ),
+                      const Spacer(),
+                      IconButton(
+                        icon: const Icon(Icons.close, color: Colors.white70),
+                        onPressed: () => Navigator.pop(ctx),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    'Set how long friends can view this story (Max 1 minute)',
+                    style: TextStyle(color: Colors.white.withValues(alpha: 0.6), fontSize: 13),
+                  ),
+                  const SizedBox(height: 14),
+                  ...options.map((opt) {
+                    final sec = opt['seconds'] as int;
+                    final isSelected = _selectedDurationSeconds == sec;
+                    return InkWell(
+                      borderRadius: BorderRadius.circular(12),
+                      onTap: () {
+                        setState(() {
+                          _selectedDurationSeconds = sec;
+                        });
+                        Navigator.pop(ctx);
+                      },
+                      child: Container(
+                        margin: const EdgeInsets.only(bottom: 8),
+                        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                        decoration: BoxDecoration(
+                          color: isSelected ? const Color(0xFF1877F2).withValues(alpha: 0.2) : Colors.white10,
+                          borderRadius: BorderRadius.circular(12),
+                          border: Border.all(
+                            color: isSelected ? const Color(0xFF1877F2) : Colors.transparent,
+                            width: 1.5,
+                          ),
+                        ),
+                        child: Row(
+                          children: [
+                            Icon(
+                              isSelected ? Icons.check_circle : Icons.radio_button_unchecked,
+                              color: isSelected ? const Color(0xFF1877F2) : Colors.white38,
+                              size: 20,
+                            ),
+                            const SizedBox(width: 12),
+                            Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  opt['label'] as String,
+                                  style: TextStyle(
+                                    color: isSelected ? Colors.white : Colors.white.withValues(alpha: 0.85),
+                                    fontWeight: FontWeight.bold,
+                                    fontSize: 15,
+                                  ),
+                                ),
+                                Text(
+                                  opt['desc'] as String,
+                                  style: const TextStyle(color: Colors.white54, fontSize: 12),
+                                ),
+                              ],
+                            ),
+                          ],
                         ),
                       ),
-                      child: Row(
-                        children: [
-                          Icon(
-                            isSelected ? Icons.check_circle : Icons.radio_button_unchecked,
-                            color: isSelected ? const Color(0xFF1877F2) : Colors.white38,
-                            size: 20,
-                          ),
-                          const SizedBox(width: 12),
-                          Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                opt['label'] as String,
-                                style: TextStyle(
-                                  color: isSelected ? Colors.white : Colors.white.withValues(alpha: 0.85),
-                                  fontWeight: FontWeight.bold,
-                                  fontSize: 15,
-                                ),
-                              ),
-                              Text(
-                                opt['desc'] as String,
-                                style: TextStyle(color: Colors.white54, fontSize: 12),
-                              ),
-                            ],
-                          ),
-                        ],
-                      ),
-                    ),
-                  );
-                }),
-              ],
+                    );
+                  }),
+                  const SizedBox(height: 12),
+                ],
+              ),
             ),
           ),
         );
@@ -705,7 +715,7 @@ class _KeoStoryCreatorScreenState extends State<KeoStoryCreatorScreen> {
       textY: _textY,
       textScale: _textScale,
       textRotation: _textRotation,
-      sticker: _stickers.isNotEmpty ? _stickers.first.sticker : _selectedSticker,
+      sticker: _stickers.isNotEmpty ? _stickers.first.sticker : null,
       stickersJson: _stickers.isNotEmpty ? jsonEncode(_stickers.map((s) => s.toJson()).toList()) : null,
       stickerX: _stickers.isNotEmpty ? _stickers.first.x : _stickerX,
       stickerY: _stickers.isNotEmpty ? _stickers.first.y : _stickerY,
@@ -974,6 +984,11 @@ class _KeoStoryCreatorScreenState extends State<KeoStoryCreatorScreen> {
                     onDelete: () {
                       setState(() {
                         _stickers.removeWhere((s) => s.id == stItem.id);
+                        if (_stickers.isEmpty) {
+                          
+                        } else {
+                          
+                        }
                         _activeStickerId = null;
                         _activeItem = null;
                       });
