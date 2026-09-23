@@ -386,6 +386,7 @@ class _KeoStoryViewerScreenState extends State<KeoStoryViewerScreen> {
               ),
             ),
 
+            ..._buildMultipleTexts(currentStory),
             // Text overlay only if present and non-empty
             if (currentStory.text != null && currentStory.text!.trim().isNotEmpty)
               Positioned(
@@ -801,5 +802,50 @@ class _KeoStoryViewerScreenState extends State<KeoStoryViewerScreen> {
         );
       },
     );
+  }
+
+  List<Widget> _buildMultipleTexts(KeoStoryItem story) {
+    try {
+      final textList = jsonDecode(story.textsJson!) as List;
+      return textList.map((tx) {
+        final double x = (tx['x'] as num?)?.toDouble() ?? 80.0;
+        final double y = (tx['y'] as num?)?.toDouble() ?? 260.0;
+        final double rot = (tx['rotation'] as num?)?.toDouble() ?? 0.0;
+        final double sc = (tx['scale'] as num?)?.toDouble() ?? 1.0;
+        final String content = (tx['text'] as String?) ?? '';
+        final int col = (tx['textColor'] as num?)?.toInt() ?? 0xFFFFFFFF;
+        final bool bg = (tx['textHasBackground'] as bool?) ?? true;
+        if (content.trim().isEmpty) return const SizedBox.shrink();
+        return Positioned(
+          top: y,
+          left: x,
+          child: Transform.rotate(
+            angle: rot,
+            child: Transform.scale(
+              scale: sc,
+              child: Container(
+                padding: bg ? const EdgeInsets.symmetric(horizontal: 14, vertical: 8) : EdgeInsets.zero,
+                decoration: BoxDecoration(
+                  color: bg ? Colors.black54 : Colors.transparent,
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: Text(
+                  content,
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    color: Color(col),
+                    fontSize: 24,
+                    fontWeight: FontWeight.w700,
+                    shadows: const [Shadow(color: Colors.black87, blurRadius: 8, offset: Offset(0, 1))],
+                  ),
+                ),
+              ),
+            ),
+          ),
+        );
+      }).toList();
+    } catch (_) {
+      return [];
+    }
   }
 }

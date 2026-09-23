@@ -12,6 +12,7 @@ class KeoStoryItem {
   final double musicY;
   final double musicScale;
   final String? text;
+  final String? textsJson;
   final int textColor;
   final int textStyleIndex;
   final bool textHasBackground;
@@ -46,6 +47,7 @@ class KeoStoryItem {
     this.musicY = 480.0,
     this.musicScale = 1.0,
     this.text,
+    this.textsJson,
     this.textColor = 0xFFFFFFFF,
     this.textStyleIndex = 0,
     this.textHasBackground = true,
@@ -83,6 +85,7 @@ class KeoStoryItem {
     'musicY': musicY,
     'musicScale': musicScale,
     'text': text,
+    'textsJson': textsJson,
     'textColor': textColor,
     'textStyleIndex': textStyleIndex,
     'textHasBackground': textHasBackground,
@@ -119,6 +122,7 @@ class KeoStoryItem {
       musicY: (json['musicY'] as num?)?.toDouble() ?? 480.0,
       musicScale: (json['musicScale'] as num?)?.toDouble() ?? 1.0,
       text: json['text'],
+      textsJson: json['textsJson'],
       textColor: (json['textColor'] as num?)?.toInt() ?? 0xFFFFFFFF,
       textStyleIndex: (json['textStyleIndex'] as num?)?.toInt() ?? 0,
       textHasBackground: json['textHasBackground'] ?? true,

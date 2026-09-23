@@ -17,6 +17,49 @@ class KeoMusicItem {
 }
 
 
+
+class StoryTextItem {
+  final String id;
+  String text;
+  int textColor;
+  int textStyleIndex;
+  bool textHasBackground;
+  double x;
+  double y;
+  double scale;
+  double rotation;
+  double prevScale;
+  double prevRotation;
+  int lastPointerCount;
+
+  StoryTextItem({
+    required this.id,
+    required this.text,
+    this.textColor = 0xFFFFFFFF,
+    this.textStyleIndex = 0,
+    this.textHasBackground = true,
+    this.x = 60.0,
+    this.y = 280.0,
+    this.scale = 1.0,
+    this.rotation = 0.0,
+    this.prevScale = 1.0,
+    this.prevRotation = 0.0,
+    this.lastPointerCount = 0,
+  });
+
+  Map<String, dynamic> toJson() => {
+    'id': id,
+    'text': text,
+    'textColor': textColor,
+    'textStyleIndex': textStyleIndex,
+    'textHasBackground': textHasBackground,
+    'x': x,
+    'y': y,
+    'scale': scale,
+    'rotation': rotation,
+  };
+}
+
 class StoryStickerItem {
   final String id;
   String sticker;
@@ -75,19 +118,18 @@ class _KeoStoryCreatorScreenState extends State<KeoStoryCreatorScreen> {
   final double _stickerScale = 1.0;
   final double _stickerRotation = 0.0;
   final List<StoryStickerItem> _stickers = [];
+  final List<StoryTextItem> _texts = [];
+  String? _activeTextId;
   String? _activeStickerId;
-  int _lastTextPointerCount = 0;
-  double _prevTextScale = 1.0;
-  double _prevTextRotation = 0.0;
-  String? _activeItem; // TikTok style active selected item ('text', 'sticker', null)
+        String? _activeItem; // TikTok style active selected item ('text', 'sticker', null)
 
-  double _textX = 60.0;
-  double _textY = 280.0;
-  double _textScale = 1.0;
-  double _textRotation = 0.0;
-  Color _selectedTextColor = Colors.white;
-  String _selectedFontFamily = 'Classic';
-  bool _textBackground = false;
+  final double _textX = 60.0;
+  final double _textY = 280.0;
+  final double _textScale = 1.0;
+  final double _textRotation = 0.0;
+  final Color _selectedTextColor = Colors.white;
+  final String _selectedFontFamily = 'Classic';
+  final bool _textBackground = false;
 
   String? _taggedFriend;
   double _tagX = 40.0;
@@ -140,11 +182,12 @@ class _KeoStoryCreatorScreenState extends State<KeoStoryCreatorScreen> {
     }
   }
 
-  void _addTextDialog() {
-    final controller = TextEditingController(text: _overlayText ?? '');
-    Color tempColor = _selectedTextColor;
-    String tempFont = _selectedFontFamily;
-    bool tempBg = _textBackground;
+  void _addTextDialog({StoryTextItem? existingItem}) {
+    final isEditing = existingItem != null;
+    final controller = TextEditingController(text: isEditing ? existingItem.text : '');
+    Color tempColor = isEditing ? Color(existingItem.textColor) : _selectedTextColor;
+    String tempFont = isEditing ? (['Classic', 'Modern', 'Neon', 'Handwriting', 'Typewriter', 'Strong'].elementAtOrNull(existingItem.textStyleIndex) ?? 'Classic') : _selectedFontFamily;
+    bool tempBg = isEditing ? existingItem.textHasBackground : _textBackground;
 
     final fonts = ['Classic', 'Modern', 'Neon', 'Handwriting', 'Typewriter', 'Strong'];
     final colors = [
@@ -228,11 +271,34 @@ class _KeoStoryCreatorScreenState extends State<KeoStoryCreatorScreen> {
                               padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 6),
                             ),
                             onPressed: () {
+                              final txt = controller.text.trim();
                               setState(() {
-                                _overlayText = controller.text.trim().isEmpty ? null : controller.text.trim();
-                                _selectedTextColor = tempColor;
-                                _selectedFontFamily = tempFont;
-                                _textBackground = tempBg;
+                                final fontIdx = ['Classic', 'Modern', 'Neon', 'Handwriting', 'Typewriter', 'Strong'].indexOf(tempFont);
+                                if (isEditing) {
+                                  if (txt.isEmpty) {
+                                    _texts.removeWhere((t) => t.id == existingItem.id);
+                                    if (_activeTextId == existingItem.id) _activeTextId = null;
+                                  } else {
+                                    existingItem.text = txt;
+                                    existingItem.textColor = tempColor.toARGB32();
+                                    existingItem.textStyleIndex = fontIdx != -1 ? fontIdx : 0;
+                                    existingItem.textHasBackground = tempBg;
+                                  }
+                                } else if (txt.isNotEmpty) {
+                                  final newItem = StoryTextItem(
+                                    id: 'txt_${DateTime.now().millisecondsSinceEpoch}',
+                                    text: txt,
+                                    textColor: tempColor.toARGB32(),
+                                    textStyleIndex: fontIdx != -1 ? fontIdx : 0,
+                                    textHasBackground: tempBg,
+                                    x: 80.0,
+                                    y: 260.0 + (_texts.length * 40.0),
+                                  );
+                                  _texts.add(newItem);
+                                  _activeItem = 'text';
+                                  _activeTextId = newItem.id;
+                                }
+                                _overlayText = _texts.isNotEmpty ? _texts.first.text : null;
                               });
                               Navigator.pop(ctx);
                             },
@@ -707,7 +773,8 @@ class _KeoStoryCreatorScreenState extends State<KeoStoryCreatorScreen> {
       musicName: _selectedMusic?.title ?? 'KeoBeat Original',
       musicArtist: _selectedMusic?.artist,
       musicUrl: _selectedMusic?.url,
-      text: _overlayText,
+      text: _texts.isNotEmpty ? _texts.first.text : _overlayText,
+      textsJson: _texts.isNotEmpty ? jsonEncode(_texts.map((t) => t.toJson()).toList()) : null,
       textColor: _selectedTextColor.toARGB32(),
       textStyleIndex: ['Classic', 'Modern', 'Neon', 'Handwriting', 'Typewriter', 'Strong'].indexOf(_selectedFontFamily),
       textHasBackground: _textBackground,
@@ -800,71 +867,70 @@ class _KeoStoryCreatorScreenState extends State<KeoStoryCreatorScreen> {
             ),
           ),
 
-          // TikTok Style Text Overlay with Sharp Border, All-Area Touch & Fixed Tooltip
-          if (_overlayText != null)
+          // TikTok Style Multi-Text Overlay with Double Tap to Edit, Sharp Border & Delete Tooltip
+          for (final txtItem in _texts)
             Positioned(
-              top: _textY,
-              left: _textX,
+              top: txtItem.y,
+              left: txtItem.x,
               child: Transform.rotate(
-                angle: _textRotation,
+                angle: txtItem.rotation,
                 child: Transform.scale(
-                  scale: _textScale,
+                  scale: txtItem.scale,
                   child: GestureDetector(
                     behavior: HitTestBehavior.opaque,
-                    onTap: () => setState(() => _activeItem = 'text'),
-                    onDoubleTap: _addTextDialog,
+                    onTap: () => setState(() {
+                      _activeItem = 'text';
+                      _activeTextId = txtItem.id;
+                    }),
+                    onDoubleTap: () => _addTextDialog(existingItem: txtItem),
                     onScaleStart: (details) {
-                      _prevTextScale = 1.0;
-                      _prevTextRotation = 0.0;
-                      _lastTextPointerCount = details.pointerCount;
-                      setState(() => _activeItem = 'text');
+                      txtItem.prevScale = 1.0;
+                      txtItem.prevRotation = 0.0;
+                      txtItem.lastPointerCount = details.pointerCount;
+                      setState(() {
+                        _activeItem = 'text';
+                        _activeTextId = txtItem.id;
+                      });
                     },
                     onScaleUpdate: (details) {
                       setState(() {
-                        _textX += details.focalPointDelta.dx;
-                        _textY += details.focalPointDelta.dy;
-
-                        if (details.pointerCount >= 2) {
-                          if (_lastTextPointerCount < 2) {
-                            _prevTextScale = details.scale;
-                            _prevTextRotation = details.rotation;
-                          } else {
-                            final double scaleDelta = _prevTextScale > 0.0001 ? (details.scale / _prevTextScale) : 1.0;
-                            final double rotationDelta = details.rotation - _prevTextRotation;
-
-                            _textScale = (_textScale * scaleDelta).clamp(0.4, 4.5);
-                            _textRotation += rotationDelta;
-
-                            _prevTextScale = details.scale;
-                            _prevTextRotation = details.rotation;
+                        txtItem.x += details.focalPointDelta.dx;
+                        txtItem.y += details.focalPointDelta.dy;
+                        if (details.pointerCount >= 2 || txtItem.lastPointerCount >= 2) {
+                          if (details.scale != 1.0) {
+                            final deltaScale = details.scale / txtItem.prevScale;
+                            txtItem.scale = (txtItem.scale * deltaScale).clamp(0.4, 5.0);
+                            txtItem.prevScale = details.scale;
                           }
-                        } else {
-                          _prevTextScale = 1.0;
-                          _prevTextRotation = 0.0;
+                          if (details.rotation != 0.0) {
+                            final deltaRotation = details.rotation - txtItem.prevRotation;
+                            txtItem.rotation += deltaRotation;
+                            txtItem.prevRotation = details.rotation;
+                          }
                         }
-                        _lastTextPointerCount = details.pointerCount;
                       });
                     },
-                    onScaleEnd: (details) {
-                      _prevTextScale = 1.0;
-                      _prevTextRotation = 0.0;
-                      _lastTextPointerCount = 0;
-                    },
                     child: Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                      padding: txtItem.textHasBackground
+                          ? const EdgeInsets.symmetric(horizontal: 14, vertical: 8)
+                          : const EdgeInsets.all(4),
                       decoration: BoxDecoration(
-                        color: _textBackground
+                        color: txtItem.textHasBackground
                             ? Colors.black.withValues(alpha: 0.65)
-                            : const Color(0x01000000),
-                        borderRadius: _activeItem == 'text' ? BorderRadius.zero : BorderRadius.circular(8),
-                        border: _activeItem == 'text'
-                            ? Border.all(color: Colors.white, width: (1.5 / _textScale).clamp(0.3, 3.0))
-                            : (_textBackground ? Border.all(color: Colors.white24) : null),
+                            : Colors.transparent,
+                        borderRadius: BorderRadius.circular(10),
+                        border: (_activeItem == 'text' && _activeTextId == txtItem.id)
+                            ? Border.all(color: Colors.white, width: 2)
+                            : null,
                       ),
                       child: Text(
-                        _overlayText ?? '',
+                        txtItem.text,
                         textAlign: TextAlign.center,
-                        style: _getStoryTextStyle(_selectedFontFamily, _selectedTextColor, fontSize: 24).copyWith(
+                        style: _getStoryTextStyle(
+                          ['Classic', 'Modern', 'Neon', 'Handwriting', 'Typewriter', 'Strong'].elementAtOrNull(txtItem.textStyleIndex) ?? 'Classic',
+                          Color(txtItem.textColor),
+                          fontSize: 24,
+                        ).copyWith(
                           shadows: const [
                             Shadow(color: Colors.black87, blurRadius: 8, offset: Offset(0, 1)),
                           ],
@@ -876,21 +942,26 @@ class _KeoStoryCreatorScreenState extends State<KeoStoryCreatorScreen> {
               ),
             ),
 
-          // Separate Independent Delete Button for Text (Always clickable at any scale)
-          if (_overlayText != null && _activeItem == 'text')
-            Positioned(
-              top: (_textY - 45).clamp(60.0, MediaQuery.of(context).size.height - 120),
-              left: (_textX + 20).clamp(20.0, MediaQuery.of(context).size.width - 110),
-              child: TikTokDeleteTooltip(
-                currentScale: 1.0,
-                onDelete: () {
-                  setState(() {
-                    _overlayText = null;
-                    _activeItem = null;
-                  });
-                },
-              ),
-            ),
+          // Separate Independent Delete Button for Active Text
+          if (_activeItem == 'text' && _activeTextId != null) ...[
+            for (final txtItem in _texts)
+              if (txtItem.id == _activeTextId)
+                Positioned(
+                  top: (txtItem.y - 45).clamp(60.0, MediaQuery.of(context).size.height - 120),
+                  left: (txtItem.x + 20).clamp(20.0, MediaQuery.of(context).size.width - 110),
+                  child: TikTokDeleteTooltip(
+                    currentScale: 1.0,
+                    onDelete: () {
+                      setState(() {
+                        _texts.removeWhere((t) => t.id == txtItem.id);
+                        _activeTextId = null;
+                        _activeItem = null;
+                        _overlayText = _texts.isNotEmpty ? _texts.first.text : null;
+                      });
+                    },
+                  ),
+                ),
+          ],
 
           // TikTok Style Multi-Sticker Overlay with Sharp Border & HitTest
           for (final stItem in _stickers)
