@@ -81,15 +81,20 @@ class _KeoStoryViewerScreenState extends State<KeoStoryViewerScreen> {
     _storyTimer?.cancel();
     try { _audioPlayer.stop(); _audioPlayer.dispose(); } catch (_) {}
     _storyTimer = Timer.periodic(const Duration(milliseconds: 50), (timer) {
-      if (!mounted) return;
       if (_isPaused) return; // Paused when pressed and held
 
       setState(() {
-        _progress += 0.01;
+        final sec = (_currentIndex < widget.stories.length)
+            ? widget.stories[_currentIndex].durationSeconds
+            : 10;
+        final durationSec = (sec > 0) ? sec : 10;
+        final step = 1.0 / (durationSec * 20); // 20 ticks of 50ms per second
+        _progress += step;
         if (_progress >= 1.0) {
           _progress = 0.0;
           if (_currentIndex < widget.stories.length - 1) {
             _currentIndex++;
+            _playStoryMusic();
           } else {
             _storyTimer?.cancel();
             Navigator.pop(context);
@@ -98,7 +103,6 @@ class _KeoStoryViewerScreenState extends State<KeoStoryViewerScreen> {
       });
     });
   }
-
   void _pauseStory() {
     setState(() {
       _isPaused = true;
