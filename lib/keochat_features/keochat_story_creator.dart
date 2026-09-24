@@ -107,7 +107,13 @@ class KeoStoryCreatorScreen extends StatefulWidget {
   State<KeoStoryCreatorScreen> createState() => _KeoStoryCreatorScreenState();
 }
 
-class _KeoStoryCreatorScreenState extends State<KeoStoryCreatorScreen> {
+class _KeoStoryCreatorScreenState extends State<KeoStoryCreatorScreen> with WidgetsBindingObserver {
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addObserver(this);
+  }
+
   int _selectedDurationSeconds = 10;
   final AudioPlayer _creatorAudioPlayer = AudioPlayer();
   KeoMusicItem? _selectedMusic;
@@ -167,11 +173,13 @@ class _KeoStoryCreatorScreenState extends State<KeoStoryCreatorScreen> {
       try {
         await _creatorAudioPlayer.stop();
         if (selected.previewUrl.isNotEmpty) {
+          await _creatorAudioPlayer.setReleaseMode(ReleaseMode.loop);
           await _creatorAudioPlayer.play(UrlSource(selected.previewUrl));
         }
       } catch (_) {}
 
       if (!mounted) return;
+    if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text('Selected & Playing: ${selected.title} - ${selected.artist} 🎵'),
@@ -767,7 +775,7 @@ class _KeoStoryCreatorScreenState extends State<KeoStoryCreatorScreen> {
     );
   }
 
-  void _publishStory() {
+  void _publishStory() async {
     final manager = KeoStoryManager();
     final newStory = KeoStoryItem(
       id: 'story_${DateTime.now().millisecondsSinceEpoch}',
@@ -800,14 +808,20 @@ class _KeoStoryCreatorScreenState extends State<KeoStoryCreatorScreen> {
       createdAt: DateTime.now(),
     );
 
+    try {
+      await _creatorAudioPlayer.stop();
+    } catch (_) {}
+
     manager.addStory(newStory);
 
+    if (!mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(
         content: Text('Story shared successfully!'),
         backgroundColor: Color(0xFF31A24C),
       ),
     );
+    if (!mounted) return;
     Navigator.pop(context, true);
   }
 
@@ -824,7 +838,14 @@ class _KeoStoryCreatorScreenState extends State<KeoStoryCreatorScreen> {
       colorFilter = const ColorFilter.mode(Colors.grey, BlendMode.saturation);
     }
 
-    return Scaffold(
+    return PopScope(
+      canPop: true,
+      onPopInvokedWithResult: (didPop, result) {
+        if (didPop) {
+          try { _creatorAudioPlayer.stop(); } catch (_) {}
+        }
+      },
+      child: Scaffold(
       backgroundColor: Colors.black,
       body: Stack(
         children: [
@@ -1319,7 +1340,10 @@ class _KeoStoryCreatorScreenState extends State<KeoStoryCreatorScreen> {
               backgroundColor: Colors.black54,
               child: IconButton(
                 icon: const Icon(Icons.close, color: Colors.white),
-                onPressed: () => Navigator.pop(context),
+                onPressed: () async {
+                  try { await _creatorAudioPlayer.stop(); } catch (_) {}
+                  if (context.mounted) Navigator.pop(context);
+                },
               ),
             ),
           ),
@@ -1365,6 +1389,7 @@ class _KeoStoryCreatorScreenState extends State<KeoStoryCreatorScreen> {
           ),
         ],
       ),
+    ),
     );
   }
 
@@ -1387,14 +1412,31 @@ class _KeoStoryCreatorScreenState extends State<KeoStoryCreatorScreen> {
                 Shadow(color: Colors.black87, blurRadius: 4),
               ]),
             ),
-  
-        ],
+          ],
         ),
       ),
     );
   }
-}
 
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.paused || state == AppLifecycleState.inactive) {
+      try { _creatorAudioPlayer.pause(); } catch (_) {}
+    } else if (state == AppLifecycleState.resumed && _selectedMusic != null) {
+      try { _creatorAudioPlayer.resume(); } catch (_) {}
+    }
+  }
+
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    try {
+      _creatorAudioPlayer.stop();
+      _creatorAudioPlayer.dispose();
+    } catch (_) {}
+    super.dispose();
+  }
+}
 
 // TikTok Style Speech-Bubble Delete Tooltip (Fixed UI scale regardless of sticker/text zoom)
 class TikTokDeleteTooltip extends StatelessWidget {
@@ -1474,6 +1516,9 @@ class _TrianglePainter extends CustomPainter {
   bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
 }
 
+
+
+
 class DoodlePoint {
   final Offset point;
   final Color color;
@@ -1500,4 +1545,6 @@ class DoodlePainter extends CustomPainter {
 
   @override
   bool shouldRepaint(covariant DoodlePainter oldDelegate) => true;
+
+
 }

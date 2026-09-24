@@ -33,7 +33,7 @@ class KeoStoryViewerScreen extends StatefulWidget {
   State<KeoStoryViewerScreen> createState() => _KeoStoryViewerScreenState();
 }
 
-class _KeoStoryViewerScreenState extends State<KeoStoryViewerScreen> {
+class _KeoStoryViewerScreenState extends State<KeoStoryViewerScreen> with WidgetsBindingObserver {
   final AudioPlayer _audioPlayer = AudioPlayer();
 
   void _playStoryMusic() async {
@@ -43,6 +43,7 @@ class _KeoStoryViewerScreenState extends State<KeoStoryViewerScreen> {
       final currentStory = widget.stories[_currentIndex];
       final url = currentStory.musicUrl;
       if (url != null && url.isNotEmpty) {
+        await _audioPlayer.setReleaseMode(ReleaseMode.loop);
         await _audioPlayer.play(UrlSource(url));
       }
     } catch (_) {}
@@ -66,6 +67,7 @@ class _KeoStoryViewerScreenState extends State<KeoStoryViewerScreen> {
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
     _playStoryMusic();
     _startStoryProgress();
     _commentFocusNode.addListener(() {
@@ -79,7 +81,7 @@ class _KeoStoryViewerScreenState extends State<KeoStoryViewerScreen> {
 
   void _startStoryProgress() {
     _storyTimer?.cancel();
-    try { _audioPlayer.stop(); _audioPlayer.dispose(); } catch (_) {}
+    
     _storyTimer = Timer.periodic(const Duration(milliseconds: 50), (timer) {
       if (_isPaused) return; // Paused when pressed and held
 
@@ -116,8 +118,21 @@ class _KeoStoryViewerScreenState extends State<KeoStoryViewerScreen> {
   }
 
   @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.paused || state == AppLifecycleState.inactive) {
+      _audioPlayer.pause();
+      _audioPlayer.resume();
+    }
+  }
+
+  @override
   void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
     _storyTimer?.cancel();
+    try {
+      _audioPlayer.stop();
+      _audioPlayer.dispose();
+    } catch (_) {}
     _commentController.dispose();
     _commentFocusNode.dispose();
     super.dispose();
