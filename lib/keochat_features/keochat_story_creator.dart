@@ -1048,7 +1048,7 @@ class _KeoStoryCreatorScreenState extends State<KeoStoryCreatorScreen> {
             for (final stItem in _stickers)
               if (stItem.id == _activeStickerId)
                 Positioned(
-                  top: (stItem.y - (35 * stItem.scale) - 36).clamp(60.0, MediaQuery.of(context).size.height - 120),
+                  top: (stItem.y + 60 - (60 * stItem.scale) - 46).clamp(60.0, MediaQuery.of(context).size.height - 120),
                   left: (stItem.x + 60 - 45).clamp(20.0, MediaQuery.of(context).size.width - 110),
                   child: TikTokDeleteTooltip(
                     currentScale: 1.0,

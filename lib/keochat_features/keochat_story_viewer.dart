@@ -471,13 +471,18 @@ class _KeoStoryViewerScreenState extends State<KeoStoryViewerScreen> {
                           angle: rot,
                           child: Transform.scale(
                             scale: sc,
-                            child: Text(
-                              em,
-                              style: const TextStyle(
-                                fontSize: 60,
-                                shadows: [
-                                  Shadow(color: Colors.black45, blurRadius: 10, offset: Offset(0, 3)),
-                                ],
+                            child: Container(
+                              width: 120,
+                              height: 120,
+                              alignment: Alignment.center,
+                              child: Text(
+                                em,
+                                style: const TextStyle(
+                                  fontSize: 60,
+                                  shadows: [
+                                    Shadow(color: Colors.black45, blurRadius: 10, offset: Offset(0, 3)),
+                                  ],
+                                ),
                               ),
                             ),
                           ),
@@ -496,16 +501,21 @@ class _KeoStoryViewerScreenState extends State<KeoStoryViewerScreen> {
                     angle: currentStory.stickerRotation,
                     child: Transform.scale(
                       scale: currentStory.stickerScale,
-                      child: Text(
-                        currentStory.sticker!,
-                        style: const TextStyle(
-                          fontSize: 60,
-                          shadows: [
-                            Shadow(color: Colors.black45, blurRadius: 10, offset: Offset(0, 3)),
-                          ],
-                        ),
-                      ),
-                    ),
+                                child: Container(
+                                  width: 120,
+                                  height: 120,
+                                  alignment: Alignment.center,
+                                  child: Text(
+                                    currentStory.sticker!,
+                                    style: const TextStyle(
+                                      fontSize: 60,
+                                      shadows: [
+                                        Shadow(color: Colors.black45, blurRadius: 10, offset: Offset(0, 3)),
+                                      ],
+                                    ),
+                                  ),
+                                ),
+                  ), 
                   ),
                 ),
             // 2. Floating Reactions
