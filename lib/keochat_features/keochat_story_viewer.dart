@@ -519,6 +519,45 @@ class _KeoStoryViewerScreenState extends State<KeoStoryViewerScreen> {
                   ),
                 ),
             // 2. Floating Reactions
+            // Tagged Friend Widget
+            if (currentStory.taggedFriend != null && currentStory.taggedFriend!.isNotEmpty)
+              Positioned(
+                top: currentStory.tagY,
+                left: currentStory.tagX,
+                child: Transform.scale(
+                  scale: currentStory.tagScale,
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                    decoration: BoxDecoration(
+                      color: Colors.black.withValues(alpha: 0.75),
+                      borderRadius: BorderRadius.circular(20),
+                      border: Border.all(color: const Color(0xFF1877F2), width: 1.5),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withValues(alpha: 0.3),
+                          blurRadius: 8,
+                          offset: const Offset(0, 2),
+                        ),
+                      ],
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        const Icon(Icons.person, color: Color(0xFF1877F2), size: 16),
+                        const SizedBox(width: 6),
+                        Text(
+                          currentStory.taggedFriend!,
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontWeight: FontWeight.bold,
+                            fontSize: 14,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
             ..._floatingReactions.map((reaction) => _buildFloatingReactionWidget(reaction)),
 
             // 3. Top Header: Progress Bars & Info Row

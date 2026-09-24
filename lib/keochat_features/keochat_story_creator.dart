@@ -624,7 +624,10 @@ class _KeoStoryCreatorScreenState extends State<KeoStoryCreatorScreen> {
                         return ListTile(
                           leading: CircleAvatar(
                             backgroundColor: const Color(0xFF1877F2),
+                            child: Text(f["initial"] ?? "U", style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
                           ),
+                          title: Text(f["name"] ?? "", style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+                          subtitle: Text(f["badge"] ?? "Friend", style: const TextStyle(color: Colors.white70, fontSize: 12)),
                           trailing: Icon(isTagged ? Icons.check_circle : Icons.add_circle_outline, color: isTagged ? const Color(0xFF1877F2) : Colors.white70),
                           onTap: () {
                             setState(() {
@@ -790,6 +793,10 @@ class _KeoStoryCreatorScreenState extends State<KeoStoryCreatorScreen> {
       stickerRotation: _stickers.isNotEmpty ? _stickers.first.rotation : _stickerRotation,
       filter: _selectedFilter,
       durationSeconds: _selectedDurationSeconds,
+      taggedFriend: _taggedFriend,
+      tagX: _tagX,
+      tagY: _tagY,
+      tagScale: _tagScale,
       createdAt: DateTime.now(),
     );
 
@@ -1068,7 +1075,7 @@ class _KeoStoryCreatorScreenState extends State<KeoStoryCreatorScreen> {
                 ),
           ],
 
-          if (_taggedFriend != null)
+          if (_taggedFriend != null) ...[
             Positioned(
               top: _tagY,
               left: _tagX,
@@ -1081,7 +1088,7 @@ class _KeoStoryCreatorScreenState extends State<KeoStoryCreatorScreen> {
                     _tagX += details.focalPointDelta.dx;
                     _tagY += details.focalPointDelta.dy;
                     if (details.scale != 1.0) {
-                      _tagScale = (_baseTagScale * details.scale).clamp(0.4, 4.0);
+                      _tagScale = (_baseTagScale * details.scale).clamp(0.5, 3.5);
                     }
                   });
                 },
@@ -1090,75 +1097,66 @@ class _KeoStoryCreatorScreenState extends State<KeoStoryCreatorScreen> {
                 },
                 child: Transform.scale(
                   scale: _tagScale,
-                  child: Stack(
-                    clipBehavior: Clip.none,
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                    decoration: BoxDecoration(
+                      color: Colors.black.withValues(alpha: 0.75),
+                      borderRadius: BorderRadius.circular(20),
+                      border: Border.all(color: const Color(0xFF1877F2), width: 1.5),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withValues(alpha: 0.3),
+                          blurRadius: 8,
+                          offset: const Offset(0, 2),
+                        ),
+                      ],
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        const Icon(Icons.person, color: Color(0xFF1877F2), size: 16),
+                        const SizedBox(width: 6),
+                        Text(
+                          _taggedFriend!,
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontWeight: FontWeight.bold,
+                            fontSize: 14,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+            ),
+            Positioned(
+              top: (_tagY - 36).clamp(50.0, MediaQuery.of(context).size.height - 120),
+              left: _tagX.clamp(16.0, MediaQuery.of(context).size.width - 90),
+              child: GestureDetector(
+                behavior: HitTestBehavior.opaque,
+                onTap: () => setState(() => _taggedFriend = null),
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                  decoration: BoxDecoration(
+                    color: Colors.redAccent,
+                    borderRadius: BorderRadius.circular(14),
+                    boxShadow: const [
+                      BoxShadow(color: Colors.black45, blurRadius: 4, offset: Offset(0, 2))
+                    ],
+                  ),
+                  child: const Row(
+                    mainAxisSize: MainAxisSize.min,
                     children: [
-                      Padding(
-                        padding: const EdgeInsets.only(top: 12, right: 12),
-                        child: Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-                          decoration: BoxDecoration(
-                            color: Colors.black.withValues(alpha: 0.75),
-                            borderRadius: BorderRadius.circular(20),
-                            border: Border.all(color: const Color(0xFF1877F2), width: 1.5),
-                            boxShadow: [
-                              BoxShadow(
-                                color: Colors.black.withValues(alpha: 0.3),
-                                blurRadius: 8,
-                                offset: const Offset(0, 2),
-                              ),
-                            ],
-                          ),
-                          child: Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              const Icon(Icons.person, color: Color(0xFF1877F2), size: 16),
-                              const SizedBox(width: 6),
-                              Text(
-                                _taggedFriend!,
-                                style: const TextStyle(
-                                  color: Colors.white,
-                                  fontWeight: FontWeight.bold,
-                                  fontSize: 14,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ),
-                      Positioned(
-                        top: 0,
-                        right: 0,
-                        child: Transform.scale(
-                          scale: 1.0 / _tagScale,
-                          child: Listener(
-                            behavior: HitTestBehavior.opaque,
-                            onPointerDown: (_) {
-                              setState(() => _taggedFriend = null);
-                            },
-                            child: GestureDetector(
-                              onTap: () => setState(() => _taggedFriend = null),
-                              child: Container(
-                                width: 28,
-                                height: 28,
-                                decoration: BoxDecoration(
-                                  color: Colors.black.withValues(alpha: 0.85),
-                                  shape: BoxShape.circle,
-                                  border: Border.all(color: Colors.white, width: 1.5),
-                                ),
-                                child: const Center(
-                                  child: Icon(Icons.close, color: Colors.white, size: 16),
-                                ),
-                              ),
-                            ),
-                          ),
-                        ),
-                      ),
+                      Icon(Icons.delete_outline, color: Colors.white, size: 14),
+                      SizedBox(width: 4),
+                      Text('Delete', style: TextStyle(color: Colors.white, fontSize: 11, fontWeight: FontWeight.bold)),
                     ],
                   ),
                 ),
               ),
             ),
+          ],
           // Freehand Doodle Drawing Canvas
           Positioned.fill(
             child: IgnorePointer(
