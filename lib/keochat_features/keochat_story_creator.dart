@@ -778,10 +778,10 @@ class _KeoStoryCreatorScreenState extends State<KeoStoryCreatorScreen> {
       textColor: _selectedTextColor.toARGB32(),
       textStyleIndex: ['Classic', 'Modern', 'Neon', 'Handwriting', 'Typewriter', 'Strong'].indexOf(_selectedFontFamily),
       textHasBackground: _textBackground,
-      textX: _textX,
-      textY: _textY,
-      textScale: _textScale,
-      textRotation: _textRotation,
+      textX: _texts.isNotEmpty ? _texts.first.x : _textX,
+      textY: _texts.isNotEmpty ? _texts.first.y : _textY,
+      textScale: _texts.isNotEmpty ? _texts.first.scale : _textScale,
+      textRotation: _texts.isNotEmpty ? _texts.first.rotation : _textRotation,
       sticker: _stickers.isNotEmpty ? _stickers.first.sticker : null,
       stickersJson: _stickers.isNotEmpty ? jsonEncode(_stickers.map((s) => s.toJson()).toList()) : null,
       stickerX: _stickers.isNotEmpty ? _stickers.first.x : _stickerX,
@@ -920,7 +920,7 @@ class _KeoStoryCreatorScreenState extends State<KeoStoryCreatorScreen> {
                             : Colors.transparent,
                         borderRadius: BorderRadius.circular(10),
                         border: (_activeItem == 'text' && _activeTextId == txtItem.id)
-                            ? Border.all(color: Colors.white, width: 2)
+                            ? Border.all(color: Colors.white, width: (2.0 / txtItem.scale).clamp(0.6, 2.5))
                             : null,
                       ),
                       child: Text(
@@ -947,7 +947,7 @@ class _KeoStoryCreatorScreenState extends State<KeoStoryCreatorScreen> {
             for (final txtItem in _texts)
               if (txtItem.id == _activeTextId)
                 Positioned(
-                  top: (txtItem.y - 45).clamp(60.0, MediaQuery.of(context).size.height - 120),
+                  top: (txtItem.y - (28 * txtItem.scale) - 35).clamp(60.0, MediaQuery.of(context).size.height - 120),
                   left: (txtItem.x + 20).clamp(20.0, MediaQuery.of(context).size.width - 110),
                   child: TikTokDeleteTooltip(
                     currentScale: 1.0,

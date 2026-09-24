@@ -386,7 +386,7 @@ class _KeoStoryViewerScreenState extends State<KeoStoryViewerScreen> {
               ),
             ),
 
-            ..._buildMultipleTexts(currentStory),
+            if (currentStory.textsJson != null && currentStory.textsJson!.isNotEmpty) ..._buildMultipleTexts(currentStory) else
             // Text overlay only if present and non-empty
             if (currentStory.text != null && currentStory.text!.trim().isNotEmpty)
               Positioned(
@@ -824,9 +824,9 @@ class _KeoStoryViewerScreenState extends State<KeoStoryViewerScreen> {
             child: Transform.scale(
               scale: sc,
               child: Container(
-                padding: bg ? const EdgeInsets.symmetric(horizontal: 14, vertical: 8) : EdgeInsets.zero,
+                padding: bg ? const EdgeInsets.symmetric(horizontal: 14, vertical: 8) : const EdgeInsets.all(4),
                 decoration: BoxDecoration(
-                  color: bg ? Colors.black54 : Colors.transparent,
+                  color: bg ? Colors.black.withValues(alpha: 0.65) : Colors.transparent,
                   borderRadius: BorderRadius.circular(10),
                 ),
                 child: Text(
