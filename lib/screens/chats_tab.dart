@@ -31,31 +31,20 @@ class _ChatsTabState extends State<ChatsTab> {
     });
   }
 
-  Future<void> _handleYourStoryTap() async {
+  void _openStoryPicker() {
     final storyManager = KeoStoryManager();
     storyManager.cleanExpiredStories();
-    if (storyManager.myStories.isNotEmpty) {
-      final res = await Navigator.push(
-        context,
-        MaterialPageRoute(
-          builder: (_) => KeoStoryViewerScreen(
-            isMyStory: true,
-            userName: 'Your Story',
-            userInitial: 'Y',
-            stories: storyManager.myStories,
-          ),
+    if (storyManager.myStories.length >= KeoStoryManager.maxStoriesPerUser) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Story limit reached (5/5). Stories expire after 24 hours.'),
+          backgroundColor: Colors.redAccent,
+          duration: Duration(seconds: 3),
         ),
       );
-      if (mounted) {
-        setState(() {});
-        if (res == 'ADD_STORY') {
-          _handleYourStoryTap();
-        }
-      }
       return;
     }
-    
-    // Pick media
+
     final picker = ImagePicker();
     showModalBottomSheet(
       context: context,
@@ -68,6 +57,10 @@ class _ChatsTabState extends State<ChatsTab> {
             ListTile(
               leading: const Icon(Icons.photo_library, color: Colors.blueAccent),
               title: const Text('Add Photo Story', style: TextStyle(color: Colors.white)),
+              subtitle: Text(
+                '${storyManager.myStories.length}/5 stories used',
+                style: const TextStyle(color: Colors.white70, fontSize: 12),
+              ),
               onTap: () async {
                 Navigator.pop(ctx);
                 final xfile = await picker.pickImage(source: ImageSource.gallery);
@@ -98,6 +91,86 @@ class _ChatsTabState extends State<ChatsTab> {
                     ),
                   ).then((_) { if (mounted) setState(() {}); });
                 }
+              },
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Future<void> _handleYourStoryTap() async {
+    final storyManager = KeoStoryManager();
+    storyManager.cleanExpiredStories();
+
+    if (storyManager.myStories.isEmpty) {
+      _openStoryPicker();
+      return;
+    }
+
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: const Color(0xFF242526),
+      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(16))),
+      builder: (ctx) => SafeArea(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            ListTile(
+              leading: const Icon(Icons.remove_red_eye_outlined, color: Colors.blueAccent),
+              title: const Text('View your story', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+              subtitle: Text(
+                '${storyManager.myStories.length} active ${storyManager.myStories.length > 1 ? "stories" : "story"}',
+                style: const TextStyle(color: Colors.white70, fontSize: 12),
+              ),
+              onTap: () async {
+                Navigator.pop(ctx);
+                final res = await Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (_) => KeoStoryViewerScreen(
+                      isMyStory: true,
+                      userName: 'Your Story',
+                      userInitial: 'Y',
+                      stories: storyManager.myStories,
+                    ),
+                  ),
+                );
+                if (mounted) {
+                  setState(() {});
+                  if (res == 'ADD_STORY') {
+                    _openStoryPicker();
+                  }
+                }
+              },
+            ),
+            ListTile(
+              leading: Icon(
+                Icons.add_circle_outline,
+                color: storyManager.myStories.length >= KeoStoryManager.maxStoriesPerUser
+                    ? Colors.grey
+                    : Colors.greenAccent,
+              ),
+              title: Text(
+                storyManager.myStories.length >= KeoStoryManager.maxStoriesPerUser
+                    ? 'Story limit reached (5/5)'
+                    : 'Add to your story',
+                style: TextStyle(
+                  color: storyManager.myStories.length >= KeoStoryManager.maxStoriesPerUser
+                      ? Colors.grey
+                      : Colors.white,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              subtitle: Text(
+                storyManager.myStories.length >= KeoStoryManager.maxStoriesPerUser
+                    ? 'Wait 24h for existing stories to expire'
+                    : 'You can add ${KeoStoryManager.maxStoriesPerUser - storyManager.myStories.length} more',
+                style: const TextStyle(color: Colors.white70, fontSize: 12),
+              ),
+              onTap: () {
+                Navigator.pop(ctx);
+                _openStoryPicker();
               },
             ),
           ],

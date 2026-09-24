@@ -194,7 +194,7 @@ class KeoStoryManager {
     if (myStories.length >= maxStoriesPerUser) {
       return false;
     }
-    myStories.add(story);
+    myStories.insert(0, story);
     _save();
     return true;
   }
