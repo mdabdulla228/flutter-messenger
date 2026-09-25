@@ -145,6 +145,7 @@ class _KeoStoryCreatorScreenState extends State<KeoStoryCreatorScreen> with Widg
 
   bool _isDoodleMode = false;
   Color _selectedDoodleColor = Colors.white;
+  double _selectedDoodleStrokeWidth = 4.0;
   final List<DoodlePoint?> _doodlePoints = [];
 
   
@@ -805,6 +806,9 @@ class _KeoStoryCreatorScreenState extends State<KeoStoryCreatorScreen> with Widg
       tagX: _tagX,
       tagY: _tagY,
       tagScale: _tagScale,
+      doodleJson: _doodlePoints.any((p) => p != null)
+            ? jsonEncode(_doodlePoints.map((p) => p?.toJson()).toList())
+            : null,
       createdAt: DateTime.now(),
     );
 
@@ -1178,18 +1182,27 @@ class _KeoStoryCreatorScreenState extends State<KeoStoryCreatorScreen> with Widg
               ),
             ),
           ],
-          // Freehand Doodle Drawing Canvas
+                    // Freehand Doodle Drawing Canvas (Visible always, interactive in Doodle Mode)
           Positioned.fill(
             child: IgnorePointer(
               child: GestureDetector(
+                behavior: HitTestBehavior.opaque,
                 onPanStart: (details) {
                   setState(() {
-                    _doodlePoints.add(DoodlePoint(point: details.localPosition, color: _selectedDoodleColor));
+                    _doodlePoints.add(DoodlePoint(
+                      point: details.localPosition,
+                      color: _selectedDoodleColor,
+                      strokeWidth: _selectedDoodleStrokeWidth,
+                    ));
                   });
                 },
                 onPanUpdate: (details) {
                   setState(() {
-                    _doodlePoints.add(DoodlePoint(point: details.localPosition, color: _selectedDoodleColor));
+                    _doodlePoints.add(DoodlePoint(
+                      point: details.localPosition,
+                      color: _selectedDoodleColor,
+                      strokeWidth: _selectedDoodleStrokeWidth,
+                    ));
                   });
                 },
                 onPanEnd: (details) {
@@ -1205,18 +1218,18 @@ class _KeoStoryCreatorScreenState extends State<KeoStoryCreatorScreen> with Widg
             ),
           ),
 
-          // Facebook Style Doodle Toolbar (Colors, Undo, Clear, Done)
+          // Facebook Style Doodle Top Bar (Undo, 3 Stroke Sizes, Done)
           if (_isDoodleMode)
             Positioned(
-              top: MediaQuery.of(context).padding.top + 10,
+              top: MediaQuery.of(context).padding.top + 8,
               left: 16,
               right: 16,
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  IconButton(
-                    icon: const Icon(Icons.undo, color: Colors.white),
-                    onPressed: () {
+                  // Undo Button
+                  InkWell(
+                    onTap: () {
                       if (_doodlePoints.isNotEmpty) {
                         setState(() {
                           int lastNull = _doodlePoints.lastIndexOf(null);
@@ -1232,62 +1245,173 @@ class _KeoStoryCreatorScreenState extends State<KeoStoryCreatorScreen> with Widg
                         });
                       }
                     },
+                    borderRadius: BorderRadius.circular(20),
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                      decoration: BoxDecoration(
+                        color: Colors.black45,
+                        borderRadius: BorderRadius.circular(20),
+                      ),
+                      child: const Row(
+                        children: [
+                          Icon(Icons.undo, color: Colors.white, size: 20),
+                          SizedBox(width: 4),
+                          Text('Undo', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 14)),
+                        ],
+                      ),
+                    ),
                   ),
-                  TextButton(
-                    onPressed: () => setState(() => _doodlePoints.clear()),
-                    child: const Text('Clear All', style: TextStyle(color: Colors.redAccent, fontWeight: FontWeight.bold)),
+
+                  // 3 Brush Stroke Size Selectors (Thin, Medium, Thick)
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                    decoration: BoxDecoration(
+                      color: Colors.black45,
+                      borderRadius: BorderRadius.circular(24),
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        // Thin (4.0)
+                        GestureDetector(
+                          onTap: () => setState(() => _selectedDoodleStrokeWidth = 4.0),
+                          child: Container(
+                            margin: const EdgeInsets.symmetric(horizontal: 6),
+                            padding: const EdgeInsets.all(4),
+                            decoration: BoxDecoration(
+                              shape: BoxShape.circle,
+                              border: Border.all(
+                                color: _selectedDoodleStrokeWidth == 4.0 ? Colors.white : Colors.transparent,
+                                width: 2,
+                              ),
+                            ),
+                            child: Container(
+                              width: 6,
+                              height: 6,
+                              decoration: const BoxDecoration(
+                                color: Colors.white,
+                                shape: BoxShape.circle,
+                              ),
+                            ),
+                          ),
+                        ),
+                        // Medium (8.0)
+                        GestureDetector(
+                          onTap: () => setState(() => _selectedDoodleStrokeWidth = 9.0),
+                          child: Container(
+                            margin: const EdgeInsets.symmetric(horizontal: 6),
+                            padding: const EdgeInsets.all(4),
+                            decoration: BoxDecoration(
+                              shape: BoxShape.circle,
+                              border: Border.all(
+                                color: _selectedDoodleStrokeWidth == 9.0 ? Colors.white : Colors.transparent,
+                                width: 2,
+                              ),
+                            ),
+                            child: Container(
+                              width: 12,
+                              height: 12,
+                              decoration: const BoxDecoration(
+                                color: Colors.white,
+                                shape: BoxShape.circle,
+                              ),
+                            ),
+                          ),
+                        ),
+                        // Thick (15.0)
+                        GestureDetector(
+                          onTap: () => setState(() => _selectedDoodleStrokeWidth = 16.0),
+                          child: Container(
+                            margin: const EdgeInsets.symmetric(horizontal: 6),
+                            padding: const EdgeInsets.all(4),
+                            decoration: BoxDecoration(
+                              shape: BoxShape.circle,
+                              border: Border.all(
+                                color: _selectedDoodleStrokeWidth == 16.0 ? Colors.white : Colors.transparent,
+                                width: 2,
+                              ),
+                            ),
+                            child: Container(
+                              width: 18,
+                              height: 18,
+                              decoration: const BoxDecoration(
+                                color: Colors.white,
+                                shape: BoxShape.circle,
+                              ),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
+
+                  // Done Button
                   ElevatedButton(
                     style: ElevatedButton.styleFrom(
                       backgroundColor: const Color(0xFF1877F2),
                       shape: const StadiumBorder(),
-                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                      padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 8),
+                      elevation: 2,
                     ),
                     onPressed: () => setState(() => _isDoodleMode = false),
-                    child: const Text('Done', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+                    child: const Text('Done', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 14)),
                   ),
                 ],
               ),
             ),
 
+          // Facebook Style Doodle Bottom Color Palette
           if (_isDoodleMode)
             Positioned(
-              bottom: 30,
-              left: 16,
-              right: 16,
+              bottom: MediaQuery.of(context).padding.bottom + 20,
+              left: 12,
+              right: 12,
               child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                height: 54,
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                 decoration: BoxDecoration(
-                  color: Colors.black.withValues(alpha: 0.75),
+                  color: Colors.black.withValues(alpha: 0.65),
                   borderRadius: BorderRadius.circular(30),
-                  border: Border.all(color: Colors.white24),
+                  border: Border.all(color: Colors.white12),
                 ),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                child: ListView(
+                  scrollDirection: Axis.horizontal,
+                  physics: const BouncingScrollPhysics(),
                   children: [
                     Colors.white,
                     Colors.black,
-                    const Color(0xFF1877F2),
-                    Colors.redAccent,
-                    Colors.greenAccent,
-                    Colors.amberAccent,
-                    Colors.purpleAccent,
+                    const Color(0xFF1877F2), // Facebook Blue
+                    const Color(0xFF00D2FF), // Sky / Cyan
+                    const Color(0xFF00E676), // Bright Green
+                    const Color(0xFF4CAF50), // Nature Green
+                    const Color(0xFFFFEB3B), // Yellow
+                    const Color(0xFFFF9800), // Orange
+                    const Color(0xFFFF5252), // Red Accent
+                    const Color(0xFFE91E63), // Pink
+                    const Color(0xFFFF80AB), // Light Pink
+                    const Color(0xFFD7CCC8), // Peach / Beige
+                    const Color(0xFF795548), // Brown
+                    const Color(0xFF9C27B0), // Purple
+                    const Color(0xFFE040FB), // Neon Purple
+                    const Color(0xFF9E9E9E), // Grey
                   ].map((c) {
                     final isSelected = _selectedDoodleColor == c;
                     return GestureDetector(
                       onTap: () => setState(() => _selectedDoodleColor = c),
                       child: Container(
-                        width: 32,
-                        height: 32,
+                        margin: const EdgeInsets.symmetric(horizontal: 5),
+                        width: 38,
+                        height: 38,
                         decoration: BoxDecoration(
                           color: c,
                           shape: BoxShape.circle,
                           border: Border.all(
-                            color: isSelected ? Colors.white : Colors.transparent,
-                            width: isSelected ? 3 : 1,
+                            color: isSelected ? Colors.white : Colors.white24,
+                            width: isSelected ? 3.0 : 1.2,
                           ),
                           boxShadow: [
-                            if (isSelected) const BoxShadow(color: Colors.white54, blurRadius: 6),
+                            if (isSelected)
+                              BoxShadow(color: c.withValues(alpha: 0.8), blurRadius: 8, spreadRadius: 1),
                           ],
                         ),
                       ),
@@ -1296,8 +1420,7 @@ class _KeoStoryCreatorScreenState extends State<KeoStoryCreatorScreen> with Widg
                 ),
               ),
             ),
-
-          // Music playing badge indicator
+// Music playing badge indicator
           if (_selectedMusic != null)
             Positioned(
               top: 50,
@@ -1348,6 +1471,7 @@ class _KeoStoryCreatorScreenState extends State<KeoStoryCreatorScreen> with Widg
             ),
           ),
 
+          if (!_isDoodleMode)
           // Facebook Style Right Action Bar (Stickers, Text, Music, Tag, Effects, Doodle)
           Positioned(
             top: 40,
@@ -1360,14 +1484,12 @@ class _KeoStoryCreatorScreenState extends State<KeoStoryCreatorScreen> with Widg
                 _buildRightAction(Icons.person_add_alt_1_outlined, 'Tag', _openTagFriends),
                 _buildRightAction(Icons.auto_fix_high, 'Effects', _openEffects),
                 _buildRightAction(Icons.timer_outlined, '${_selectedDurationSeconds}s', _openDurationSelector),
-                _buildRightAction(Icons.draw, 'Doodle', () {
-                  setState(() {
-                  });
-                }),
+                _buildRightAction(Icons.draw, 'Doodle', () { setState(() { _isDoodleMode = true; }); }),
               ],
             ),
           ),
 
+          if (!_isDoodleMode)
           // Bottom Bar: Facebook Style Share Now Button
           Positioned(
             bottom: MediaQuery.of(context).padding.bottom + 20,
@@ -1524,6 +1646,19 @@ class DoodlePoint {
   final Color color;
   final double strokeWidth;
   DoodlePoint({required this.point, required this.color, this.strokeWidth = 4.0});
+
+  Map<String, dynamic> toJson() => {
+    'x': point.dx,
+    'y': point.dy,
+    'c': color.toARGB32(),
+    'w': strokeWidth,
+  };
+
+  static DoodlePoint fromJson(Map<String, dynamic> json) => DoodlePoint(
+    point: Offset((json['x'] as num).toDouble(), (json['y'] as num).toDouble()),
+    color: Color((json['c'] as num).toInt()),
+    strokeWidth: (json['w'] as num?)?.toDouble() ?? 4.0,
+  );
 }
 
 class DoodlePainter extends CustomPainter {

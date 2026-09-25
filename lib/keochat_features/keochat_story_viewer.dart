@@ -401,6 +401,7 @@ class _KeoStoryViewerScreenState extends State<KeoStoryViewerScreen> with Widget
               ),
             ),
 
+            if (_buildDoodleCanvas(currentStory) != null) _buildDoodleCanvas(currentStory)!,
             if (currentStory.textsJson != null && currentStory.textsJson!.isNotEmpty) ..._buildMultipleTexts(currentStory) else
             // Text overlay only if present and non-empty
             if (currentStory.text != null && currentStory.text!.trim().isNotEmpty)
@@ -868,6 +869,32 @@ class _KeoStoryViewerScreenState extends State<KeoStoryViewerScreen> with Widget
     );
   }
 
+  
+  Widget? _buildDoodleCanvas(KeoStoryItem story) {
+    try {
+      final List rawList = jsonDecode(story.doodleJson!) as List;
+      final List<_ViewerDoodlePoint?> points = rawList.map((item) {
+        if (item == null) return null;
+        final x = (item['x'] as num).toDouble();
+        final y = (item['y'] as num).toDouble();
+        final col = Color((item['c'] as num).toInt());
+        final w = (item['w'] as num?)?.toDouble() ?? 4.0;
+        return _ViewerDoodlePoint(point: Offset(x, y), color: col, strokeWidth: w);
+      }).toList();
+
+      return Positioned.fill(
+        child: IgnorePointer(
+          child: CustomPaint(
+            painter: _ViewerDoodlePainter(points),
+            size: Size.infinite,
+          ),
+        ),
+      );
+    } catch (_) {
+      return null;
+    }
+  }
+
   List<Widget> _buildMultipleTexts(KeoStoryItem story) {
     try {
       final textList = jsonDecode(story.textsJson!) as List;
@@ -912,4 +939,32 @@ class _KeoStoryViewerScreenState extends State<KeoStoryViewerScreen> with Widget
       return [];
     }
   }
+}
+
+class _ViewerDoodlePoint {
+  final Offset point;
+  final Color color;
+  final double strokeWidth;
+  _ViewerDoodlePoint({required this.point, required this.color, this.strokeWidth = 4.0});
+}
+
+class _ViewerDoodlePainter extends CustomPainter {
+  final List<_ViewerDoodlePoint?> points;
+  _ViewerDoodlePainter(this.points);
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    for (int i = 0; i < points.length - 1; i++) {
+      if (points[i] != null && points[i + 1] != null) {
+        final paint = Paint()
+          ..color = points[i]!.color
+          ..strokeCap = StrokeCap.round
+          ..strokeWidth = points[i]!.strokeWidth;
+        canvas.drawLine(points[i]!.point, points[i + 1]!.point, paint);
+      }
+    }
+  }
+
+  @override
+  bool shouldRepaint(covariant _ViewerDoodlePainter oldDelegate) => true;
 }

@@ -31,7 +31,7 @@ class KeoStoryItem {
   final double tagX;
   final double tagY;
   final double tagScale;
-  final List<List<double>>? doodlePoints;
+  final String? doodleJson;
   final int durationSeconds;
   final DateTime createdAt;
   final List<String> viewers;
@@ -66,7 +66,7 @@ class KeoStoryItem {
     this.tagX = 50.0,
     this.tagY = 160.0,
     this.tagScale = 1.0,
-    this.doodlePoints,
+    this.doodleJson,
     this.durationSeconds = 10,
     required this.createdAt,
     List<String>? viewers,
@@ -105,6 +105,7 @@ class KeoStoryItem {
     'tagY': tagY,
     'tagScale': tagScale,
     'durationSeconds': durationSeconds,
+    'doodleJson': doodleJson,
     'createdAt': createdAt.toIso8601String(),
     'viewers': viewers,
       
@@ -142,6 +143,7 @@ class KeoStoryItem {
       tagY: (json['tagY'] as num?)?.toDouble() ?? 160.0,
       tagScale: (json['tagScale'] as num?)?.toDouble() ?? 1.0,
       durationSeconds: (json['durationSeconds'] as num?)?.toInt() ?? 10,
+      doodleJson: json['doodleJson'],
       createdAt: json['createdAt'] != null ? (DateTime.tryParse(json['createdAt']) ?? DateTime.now()) : DateTime.now(),
       viewers: (json['viewers'] as List<dynamic>?)?.map((e) => e.toString()).toList() ?? [],
     );
