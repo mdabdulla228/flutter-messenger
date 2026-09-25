@@ -7,6 +7,7 @@ import '../keochat_features/keochat_active_badge.dart';
 import '../keochat_features/keochat_story_manager.dart';
 import '../keochat_features/keochat_story_viewer.dart';
 import '../keochat_features/keochat_story_creator.dart';
+import '../keochat_features/keochat_create_group_screen.dart';
 import 'package:image_picker/image_picker.dart';
 
 class ChatsTab extends StatefulWidget {
@@ -325,7 +326,13 @@ class _ChatsTabState extends State<ChatsTab> {
                   ),
                   title: Text(LanguageService.tr('new_group'), style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
                   subtitle: Text(LanguageService.tr('create_group_desc')),
-                  onTap: () => Navigator.pop(context),
+                  onTap: () {
+                    Navigator.pop(context);
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(builder: (_) => const KeoCreateGroupScreen()),
+                    );
+                  },
                 ),
                 ListTile(
                   leading: const CircleAvatar(
