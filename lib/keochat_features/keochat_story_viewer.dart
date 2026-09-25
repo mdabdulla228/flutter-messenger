@@ -954,13 +954,21 @@ class _ViewerDoodlePainter extends CustomPainter {
 
   @override
   void paint(Canvas canvas, Size size) {
-    for (int i = 0; i < points.length - 1; i++) {
-      if (points[i] != null && points[i + 1] != null) {
-        final paint = Paint()
-          ..color = points[i]!.color
-          ..strokeCap = StrokeCap.round
-          ..strokeWidth = points[i]!.strokeWidth;
-        canvas.drawLine(points[i]!.point, points[i + 1]!.point, paint);
+    for (int i = 0; i < points.length; i++) {
+      final current = points[i];
+      if (current == null) continue;
+      final next = (i + 1 < points.length) ? points[i + 1] : null;
+      final prev = (i > 0) ? points[i - 1] : null;
+
+      final paint = Paint()
+        ..color = current.color
+        ..strokeCap = StrokeCap.round
+        ..strokeWidth = current.strokeWidth;
+
+      if (next != null) {
+        canvas.drawLine(current.point, next.point, paint);
+      } else if (prev == null) {
+        canvas.drawCircle(current.point, current.strokeWidth / 2, paint);
       }
     }
   }
