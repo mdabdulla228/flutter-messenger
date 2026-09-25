@@ -1218,15 +1218,29 @@ class _KeoStoryCreatorScreenState extends State<KeoStoryCreatorScreen> with Widg
             ),
           ),
 
-          // Facebook Style Doodle Top Bar (Undo, 3 Stroke Sizes, Done)
+          // Facebook Style Doodle Top Bar (Close Left, Undo, Right-shifted Dots, Done)
           if (_isDoodleMode)
             Positioned(
               top: MediaQuery.of(context).padding.top + 8,
-              left: 16,
-              right: 16,
+              left: 14,
+              right: 14,
               child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
+                  // Left Close Button (Exit Doodle Mode)
+                  GestureDetector(
+                    onTap: () => setState(() => _isDoodleMode = false),
+                    child: Container(
+                      width: 36,
+                      height: 36,
+                      decoration: const BoxDecoration(
+                        color: Colors.black54,
+                        shape: BoxShape.circle,
+                      ),
+                      child: const Icon(Icons.close, color: Colors.white, size: 20),
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+
                   // Undo Button
                   InkWell(
                     onTap: () {
@@ -1247,26 +1261,30 @@ class _KeoStoryCreatorScreenState extends State<KeoStoryCreatorScreen> with Widg
                     },
                     borderRadius: BorderRadius.circular(20),
                     child: Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
                       decoration: BoxDecoration(
-                        color: Colors.black45,
+                        color: Colors.black54,
                         borderRadius: BorderRadius.circular(20),
                       ),
                       child: const Row(
+                        mainAxisSize: MainAxisSize.min,
                         children: [
-                          Icon(Icons.undo, color: Colors.white, size: 20),
+                          Icon(Icons.undo, color: Colors.white, size: 18),
                           SizedBox(width: 4),
-                          Text('Undo', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 14)),
+                          Text('Undo', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 13)),
                         ],
                       ),
                     ),
                   ),
 
-                  // 3 Brush Stroke Size Selectors (Thin, Medium, Thick)
+                  // Spacer to push brush stroke dots to the right
+                  const Spacer(),
+
+                  // 3 Brush Stroke Size Dots (Shifted Right)
                   Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                     decoration: BoxDecoration(
-                      color: Colors.black45,
+                      color: Colors.black54,
                       borderRadius: BorderRadius.circular(24),
                     ),
                     child: Row(
@@ -1276,8 +1294,8 @@ class _KeoStoryCreatorScreenState extends State<KeoStoryCreatorScreen> with Widg
                         GestureDetector(
                           onTap: () => setState(() => _selectedDoodleStrokeWidth = 4.0),
                           child: Container(
-                            margin: const EdgeInsets.symmetric(horizontal: 6),
-                            padding: const EdgeInsets.all(4),
+                            margin: const EdgeInsets.symmetric(horizontal: 4),
+                            padding: const EdgeInsets.all(3),
                             decoration: BoxDecoration(
                               shape: BoxShape.circle,
                               border: Border.all(
@@ -1295,12 +1313,12 @@ class _KeoStoryCreatorScreenState extends State<KeoStoryCreatorScreen> with Widg
                             ),
                           ),
                         ),
-                        // Medium (8.0)
+                        // Medium (9.0)
                         GestureDetector(
                           onTap: () => setState(() => _selectedDoodleStrokeWidth = 9.0),
                           child: Container(
-                            margin: const EdgeInsets.symmetric(horizontal: 6),
-                            padding: const EdgeInsets.all(4),
+                            margin: const EdgeInsets.symmetric(horizontal: 4),
+                            padding: const EdgeInsets.all(3),
                             decoration: BoxDecoration(
                               shape: BoxShape.circle,
                               border: Border.all(
@@ -1309,8 +1327,8 @@ class _KeoStoryCreatorScreenState extends State<KeoStoryCreatorScreen> with Widg
                               ),
                             ),
                             child: Container(
-                              width: 12,
-                              height: 12,
+                              width: 11,
+                              height: 11,
                               decoration: const BoxDecoration(
                                 color: Colors.white,
                                 shape: BoxShape.circle,
@@ -1318,12 +1336,12 @@ class _KeoStoryCreatorScreenState extends State<KeoStoryCreatorScreen> with Widg
                             ),
                           ),
                         ),
-                        // Thick (15.0)
+                        // Thick (16.0)
                         GestureDetector(
                           onTap: () => setState(() => _selectedDoodleStrokeWidth = 16.0),
                           child: Container(
-                            margin: const EdgeInsets.symmetric(horizontal: 6),
-                            padding: const EdgeInsets.all(4),
+                            margin: const EdgeInsets.symmetric(horizontal: 4),
+                            padding: const EdgeInsets.all(3),
                             decoration: BoxDecoration(
                               shape: BoxShape.circle,
                               border: Border.all(
@@ -1332,8 +1350,8 @@ class _KeoStoryCreatorScreenState extends State<KeoStoryCreatorScreen> with Widg
                               ),
                             ),
                             child: Container(
-                              width: 18,
-                              height: 18,
+                              width: 16,
+                              height: 16,
                               decoration: const BoxDecoration(
                                 color: Colors.white,
                                 shape: BoxShape.circle,
@@ -1344,17 +1362,18 @@ class _KeoStoryCreatorScreenState extends State<KeoStoryCreatorScreen> with Widg
                       ],
                     ),
                   ),
+                  const SizedBox(width: 8),
 
                   // Done Button
                   ElevatedButton(
                     style: ElevatedButton.styleFrom(
                       backgroundColor: const Color(0xFF1877F2),
                       shape: const StadiumBorder(),
-                      padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 8),
+                      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 7),
                       elevation: 2,
                     ),
                     onPressed: () => setState(() => _isDoodleMode = false),
-                    child: const Text('Done', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 14)),
+                    child: const Text('Done', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 13)),
                   ),
                 ],
               ),
@@ -1378,6 +1397,8 @@ class _KeoStoryCreatorScreenState extends State<KeoStoryCreatorScreen> with Widg
                   scrollDirection: Axis.horizontal,
                   physics: const BouncingScrollPhysics(),
                   children: [
+                    const Color(0xFFFF0000), // Pure Vibrant Red
+                    const Color(0xFFD50000), // Crimson Red
                     Colors.white,
                     Colors.black,
                     const Color(0xFF1877F2), // Facebook Blue
@@ -1456,6 +1477,7 @@ class _KeoStoryCreatorScreenState extends State<KeoStoryCreatorScreen> with Widg
             ),
 
           // Close Top Button
+          if (!_isDoodleMode)
           Positioned(
             top: 44,
             left: 16,
