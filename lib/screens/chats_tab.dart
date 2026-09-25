@@ -1,3 +1,4 @@
+import 'keochat_search_screen.dart';
 import 'package:flutter/material.dart';
 import '../services/language_service.dart';
 import 'qr_scanner_screen.dart';
@@ -435,9 +436,16 @@ class _ChatsTabState extends State<ChatsTab> {
                                         });
                                       },
                                       onTap: () {
-                                        setState(() {
-                                          _isSearching = true;
-                                        });
+                                        _searchFocusNode.unfocus();
+                                        Navigator.push(
+                                          context,
+                                          MaterialPageRoute(
+                                            builder: (context) => KeoChatSearchScreen(
+                                              allChats: _chats,
+                                              activeFriends: _stories,
+                                            ),
+                                          ),
+                                        );
                                       },
                                     ),
                                   ),
