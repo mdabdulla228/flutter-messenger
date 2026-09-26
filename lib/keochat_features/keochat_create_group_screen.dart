@@ -1,3 +1,5 @@
+import '../config/keochat_config.dart';
+
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
@@ -20,7 +22,7 @@ class _KeoCreateGroupScreenState extends State<KeoCreateGroupScreen> {
   String _searchQuery = '';
 
   // Real users from KeoChat system
-  final List<KeoGroupMember> _availableUsers = [
+  final List<KeoGroupMember> _availableUsers = KeoChatConfig.enableDemoData ? [
     KeoGroupMember(id: 'u1', name: 'Tanvir Ahmed', avatar: 'T'),
     KeoGroupMember(id: 'u2', name: 'Nafis Iqbal', avatar: 'N'),
     KeoGroupMember(id: 'u3', name: 'Fahim Shahriar', avatar: 'F'),
@@ -29,7 +31,7 @@ class _KeoCreateGroupScreenState extends State<KeoCreateGroupScreen> {
     KeoGroupMember(id: 'u6', name: 'Saadman Sakib', avatar: 'S'),
     KeoGroupMember(id: 'u7', name: 'Rahat Chowdhury', avatar: 'R'),
     KeoGroupMember(id: 'u8', name: 'Kamrul Hasan', avatar: 'K'),
-  ];
+  ] : [];
 
   final Set<String> _selectedUserIds = {};
 

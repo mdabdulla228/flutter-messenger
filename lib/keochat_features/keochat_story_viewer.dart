@@ -1,3 +1,5 @@
+import '../config/keochat_config.dart';
+
 import 'dart:convert';
 import 'keochat_room_screen.dart';
 import 'dart:async';
@@ -57,12 +59,12 @@ class _KeoStoryViewerScreenState extends State<KeoStoryViewerScreen> with Widget
   final TextEditingController _commentController = TextEditingController();
   final FocusNode _commentFocusNode = FocusNode();
 
-  final List<Map<String, String>> _sampleFriends = const [
+  final List<Map<String, String>> _sampleFriends = KeoChatConfig.enableDemoData ? const [
     {'name': 'Sadia Afrin', 'initial': 'S', 'time': '2m ago'},
     {'name': 'Tanvir Ahmed', 'initial': 'T', 'time': '15m ago'},
     {'name': 'Rahim Khan', 'initial': 'R', 'time': '1h ago'},
     {'name': 'Maya Hossain', 'initial': 'M', 'time': '2h ago'},
-  ];
+  ] : const [];
 
   @override
   void initState() {

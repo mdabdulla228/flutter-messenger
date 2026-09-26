@@ -1,3 +1,5 @@
+import '../config/keochat_config.dart';
+
 import 'keochat_search_screen.dart';
 import 'package:flutter/material.dart';
 import '../services/language_service.dart';
@@ -184,14 +186,14 @@ class _ChatsTabState extends State<ChatsTab> {
   }
  // 0: All, 1: Unread, 2: Groups
 
-  final List<Map<String, dynamic>> _stories = const [
+  final List<Map<String, dynamic>> _stories = KeoChatConfig.enableDemoData ? const [
     {'initial': 'R', 'name': 'Rahim', 'badge': ''},
     {'initial': 'S', 'name': 'Sadia', 'badge': '5m'},
     {'initial': 'T', 'name': 'Tanvir', 'badge': ''},
     {'initial': 'K', 'name': 'KeoC...', 'badge': ''},
-  ];
+  ] : const [];
 
-  final List<Map<String, dynamic>> _chats = const [
+  final List<Map<String, dynamic>> _chats = KeoChatConfig.enableDemoData ? const [
     {
       'initial': 'R',
       'name': 'Rahim Ahmed',
@@ -252,7 +254,7 @@ class _ChatsTabState extends State<ChatsTab> {
       'isOnline': false,
       'badge': '1d',
     },
-  ];
+  ] : const [];
 
   List<Map<String, dynamic>> get _allCombinedChats {
     final groupMgr = KeoGroupManager();
