@@ -8,6 +8,8 @@ import '../keochat_features/keochat_story_manager.dart';
 import '../keochat_features/keochat_story_viewer.dart';
 import '../keochat_features/keochat_story_creator.dart';
 import '../keochat_features/keochat_create_group_screen.dart';
+import '../keochat_features/keochat_group_chat_screen.dart';
+import '../keochat_features/keochat_group_manager.dart';
 import 'package:image_picker/image_picker.dart';
 
 class ChatsTab extends StatefulWidget {
@@ -252,13 +254,35 @@ class _ChatsTabState extends State<ChatsTab> {
     },
   ];
 
+  List<Map<String, dynamic>> get _allCombinedChats {
+    final groupMgr = KeoGroupManager();
+    final dynamicGroups = groupMgr.groups.map((g) {
+      final lastMsg = g.messages.isNotEmpty ? g.messages.last : null;
+      return {
+        'initial': g.name.isNotEmpty ? g.name.substring(0, 1).toUpperCase() : 'G',
+        'name': g.name,
+        'message': lastMsg != null ? (lastMsg.type == KeoGroupMessageType.image ? '📷 Photo' : (lastMsg.type == KeoGroupMessageType.video ? '🎥 Video' : lastMsg.text)) : 'No messages yet',
+        'time': lastMsg != null ? lastMsg.time : 'Just now',
+        'unread': 0,
+        'isGroup': true,
+        'isOnline': false,
+        'badge': '',
+        'groupId': g.id,
+        'groupAvatar': g.avatarUrl,
+      };
+    }).toList();
+
+    return [...dynamicGroups, ..._chats];
+  }
+
   List<Map<String, dynamic>> get _filteredChats {
+    final all = _allCombinedChats;
     if (_selectedFilter == 1) {
-      return _chats.where((c) => c['unread'] > 0).toList();
+      return all.where((c) => (c['unread'] as int? ?? 0) > 0).toList();
     } else if (_selectedFilter == 2) {
-      return _chats.where((c) => c['isGroup'] == true).toList();
+      return all.where((c) => c['isGroup'] == true).toList();
     }
-    return _chats;
+    return all;
   }
 
   void _openNotificationsSheet() {
@@ -448,7 +472,7 @@ class _ChatsTabState extends State<ChatsTab> {
                                           context,
                                           MaterialPageRoute(
                                             builder: (context) => KeoChatSearchScreen(
-                                              allChats: _chats,
+                                              allChats: _allCombinedChats,
                                               activeFriends: _stories,
                                             ),
                                           ),
@@ -695,20 +719,32 @@ class _ChatsTabState extends State<ChatsTab> {
                             itemCount: displayList.length,
                             itemBuilder: (context, index) {
                               final chat = displayList[index];
-                              return InkWell(
-  onTap: () {
-    Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (context) => KeoChatRoomScreen(
-          friendName: chat['name'],
-          initial: chat['initial'].toString().isNotEmpty ? chat['initial'] : 'K',
-          isOnline: chat['isOnline'] ?? false,
-        ),
-      ),
-    );
-  },
-  child: _buildChatTile(chat),
+                                                            return InkWell(
+                                onTap: () {
+                                  if (chat['isGroup'] == true && chat['groupId'] != null) {
+                                    final group = KeoGroupManager().getGroup(chat['groupId']);
+                                    if (group != null) {
+                                      Navigator.push(
+                                        context,
+                                        MaterialPageRoute(
+                                          builder: (context) => KeoGroupChatScreen(group: group),
+                                        ),
+                                      ).then((_) { if (mounted) setState(() {}); });
+                                      return;
+                                    }
+                                  }
+                                  Navigator.push(
+                                    context,
+                                    MaterialPageRoute(
+                                      builder: (context) => KeoChatRoomScreen(
+                                        friendName: chat['name'],
+                                        initial: chat['initial'].toString().isNotEmpty ? chat['initial'] : 'K',
+                                        isOnline: chat['isOnline'] ?? false,
+                                      ),
+                                    ),
+                                  ).then((_) { if (mounted) setState(() {}); });
+                                },
+                                child: _buildChatTile(chat),
 );
                             },
                           ),
