@@ -1,3 +1,4 @@
+import '../config/keochat_config.dart';
 import 'dart:convert';
 import 'package:flutter/foundation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -213,8 +214,11 @@ class KeoGroupManager extends ChangeNotifier {
       if (data != null && data.isNotEmpty) {
         final List<dynamic> list = jsonDecode(data);
         _groups = list.map((item) => KeoGroup.fromJson(Map<String, dynamic>.from(item))).toList();
-        notifyListeners();
+      } else if (KeoChatConfig.enableDemoData) {
+        _groups = [_createDemoGroup()];
+        saveGroups();
       }
+      notifyListeners();
     } catch (e) {
       debugPrint('Error loading persistent groups: $e');
     }
@@ -239,7 +243,15 @@ class KeoGroupManager extends ChangeNotifier {
     List<KeoGroupMember>? initialMembers,
     String creatorName = 'You',
   }) async {
-    final membersList = selectedMembers ?? initialMembers ?? [];
+    var membersList = selectedMembers ?? initialMembers ?? [];
+    if (membersList.isEmpty && KeoChatConfig.enableDemoData) {
+      membersList = [
+        KeoGroupMember(id: 'u1', name: 'Tanvir Ahmed', avatarUrl: 'T', isOnline: true),
+        KeoGroupMember(id: 'u2', name: 'Nafis Iqbal', avatarUrl: 'N', isOnline: true),
+        KeoGroupMember(id: 'u3', name: 'Sadia Rahman', avatarUrl: 'S', isOnline: false),
+        KeoGroupMember(id: 'u4', name: 'Fahim Shahriar', avatarUrl: 'F', isOnline: true),
+      ];
+    }
     final now = DateTime.now();
     final timeStr = "${now.hour.toString().padLeft(2, '0')}:${now.minute.toString().padLeft(2, '0')}";
 
@@ -399,5 +411,68 @@ class KeoGroupManager extends ChangeNotifier {
   Future<void> deleteGroup(String groupId) async {
     _groups.removeWhere((g) => g.id == groupId);
     await saveGroups();
+  }
+
+  KeoGroup _createDemoGroup() {
+    final now = DateTime.now();
+    final timeStr = "${now.hour.toString().padLeft(2, '0')}:${now.minute.toString().padLeft(2, '0')}";
+    return KeoGroup(
+      id: 'demo_group_devs',
+      name: 'Flutter Devs BD 🚀',
+      avatarUrl: null,
+      createdAt: timeStr,
+      creatorName: 'You',
+      members: [
+        KeoGroupMember(id: 'me', name: 'You', isOwner: true, isAdmin: true, isOnline: true),
+        KeoGroupMember(id: 'u1', name: 'Tanvir Ahmed', avatarUrl: 'T', isOnline: true),
+        KeoGroupMember(id: 'u2', name: 'Nafis Iqbal', avatarUrl: 'N', isOnline: true),
+        KeoGroupMember(id: 'u3', name: 'Sadia Rahman', avatarUrl: 'S', isOnline: false),
+        KeoGroupMember(id: 'u4', name: 'Fahim Shahriar', avatarUrl: 'F', isOnline: true),
+      ],
+      messages: [
+        KeoGroupMessage(
+          id: 'm1',
+          senderId: 'u1',
+          senderName: 'Tanvir Ahmed',
+          senderAvatar: 'T',
+          text: 'Welcome to KeoChat Flutter Team! 🎉',
+          time: '10:30 AM',
+          isMe: false,
+          reactions: {'u2': '❤️', 'me': '👍'},
+          seenBy: [
+            KeoSeenStatus(memberId: 'u2', memberName: 'Nafis Iqbal', memberAvatar: 'N', seenTime: '10:31 AM'),
+            KeoSeenStatus(memberId: 'me', memberName: 'You', memberAvatar: '', seenTime: '10:32 AM'),
+          ],
+        ),
+        KeoGroupMessage(
+          id: 'm2',
+          senderId: 'u2',
+          senderName: 'Nafis Iqbal',
+          senderAvatar: 'N',
+          text: 'The new UI design and Blue-Night theme look amazing!',
+          time: '10:32 AM',
+          isMe: false,
+          reactions: {'u1': '🔥'},
+          seenBy: [
+            KeoSeenStatus(memberId: 'u1', memberName: 'Tanvir Ahmed', memberAvatar: 'T', seenTime: '10:33 AM'),
+            KeoSeenStatus(memberId: 'me', memberName: 'You', memberAvatar: '', seenTime: '10:34 AM'),
+          ],
+        ),
+        KeoGroupMessage(
+          id: 'm3',
+          senderId: 'me',
+          senderName: 'You',
+          text: 'Thanks! Let me know if any updates are needed before release.',
+          time: '10:35 AM',
+          isMe: true,
+          reactions: {'u1': '👏', 'u4': '❤️'},
+          seenBy: [
+            KeoSeenStatus(memberId: 'u1', memberName: 'Tanvir Ahmed', memberAvatar: 'T', seenTime: '10:36 AM'),
+            KeoSeenStatus(memberId: 'u2', memberName: 'Nafis Iqbal', memberAvatar: 'N', seenTime: '10:37 AM'),
+            KeoSeenStatus(memberId: 'u4', memberName: 'Fahim Shahriar', memberAvatar: 'F', seenTime: '10:38 AM'),
+          ],
+        ),
+      ],
+    );
   }
 }
